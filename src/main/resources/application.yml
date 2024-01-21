@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: orders_microservice
+  datasource:
+    url: jdbc:postgresql://localhost:5432/microservices
+    username: postgres
+    password: postgres
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/microservices
+    username: postgres
+    password: postgres
+    pool:
+      enabled: true
+
+  flyway:
+    baseline-on-migrate: true
+    enabled: true
+    user: "postgres"
+    password: "postgres"
+    url: "jdbc:postgresql://localhost:5432/microservices"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+        step: 1s
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    io.r2dbc.postgresql.PARAM: debug
+    io.r2dbc.postgresql.QUERY: debug
