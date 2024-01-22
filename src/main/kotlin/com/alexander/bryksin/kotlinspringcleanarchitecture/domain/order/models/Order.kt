@@ -1,6 +1,10 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.models
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.valueObjects.*
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Address
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.valueObjects.ContactInfo
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.valueObjects.OrderId
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.valueObjects.PaymentDetails
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.valueObjects.ProductId
 import java.time.OffsetDateTime
 
 data class Order(

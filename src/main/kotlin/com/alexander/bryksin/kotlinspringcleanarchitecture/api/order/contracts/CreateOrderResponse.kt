@@ -1,5 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.order.contracts
 
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Address
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.models.OrderStatus
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.models.Product
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.order.valueObjects.*
