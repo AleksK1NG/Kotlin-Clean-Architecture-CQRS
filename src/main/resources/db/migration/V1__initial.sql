@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS microservices.accounts
     updated_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS orders_email_idx ON microservices.orders (email);
+CREATE INDEX IF NOT EXISTS accounts_email_idx ON microservices.accounts (email) include (version);
 
 
 CREATE TABLE IF NOT EXISTS microservices.orders

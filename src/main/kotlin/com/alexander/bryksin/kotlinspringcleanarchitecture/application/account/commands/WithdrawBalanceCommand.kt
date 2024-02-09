@@ -2,6 +2,6 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Balance
 
-data class WithdrawBalanceCommand(val accountId: String, val balance: Balance) {
+data class WithdrawBalanceCommand(val accountId: String, val balance: Balance, val transactionId: String) {
     companion object {}
 }
