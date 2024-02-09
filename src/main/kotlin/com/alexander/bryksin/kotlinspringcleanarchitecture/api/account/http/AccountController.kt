@@ -6,10 +6,11 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.q
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountCommandService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 
 @RestController
@@ -21,6 +22,9 @@ class AccountController(
 
     @PostMapping
     suspend fun createAccount(@RequestBody request: CreateAccountRequest) = coroutineScope {
+        supervisorScope {
+
+        }
         log.info { "POST create account request: $request" }
         val account = accountCommandService.handle(request.toCommand())
         ResponseEntity.ok(account)
@@ -28,6 +32,9 @@ class AccountController(
 
     @GetMapping(path = ["{id}"])
     suspend fun getAccountById(@PathVariable id: UUID) = coroutineScope {
+        controllerScope {
+            launch { log.info { "NICE =D" } }
+        }
         val account = accountQueryService.handle(GetAccountByIdQuery(id))
         ResponseEntity.ok(account)
     }
@@ -35,4 +42,16 @@ class AccountController(
     private companion object {
         private val log = KotlinLogging.logger { }
     }
+
+    private val scope = CoroutineScope(Job() + Dispatchers.IO)
+    private suspend fun <R> controllerScope(block: CoroutineScope.() -> R): R {
+        return block(scope)
+    }
+}
+
+
+class ApiScope(private val scope: CoroutineContext = SupervisorJob()) : CoroutineScope {
+    override val coroutineContext: CoroutineContext = scope
+
+
 }

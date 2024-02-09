@@ -1,0 +1,7 @@
+package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands
+
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountStatus
+
+data class ChangeAccountStatusCommand(val accountId: String, val status: AccountStatus) {
+    companion object {}
+}

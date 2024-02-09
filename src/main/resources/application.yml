@@ -11,6 +11,9 @@ spring:
     password: postgres
     pool:
       enabled: true
+      initial-size: 5
+      max-size: 10
+      max-idle-time: 10m
 
   flyway:
     baseline-on-migrate: true
