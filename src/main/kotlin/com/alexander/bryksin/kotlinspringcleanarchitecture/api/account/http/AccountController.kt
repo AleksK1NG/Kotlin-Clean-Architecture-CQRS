@@ -1,10 +1,10 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.CreateAccountRequest
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.toCommand
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountCommandService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import org.springframework.http.ResponseEntity
@@ -22,9 +22,6 @@ class AccountController(
 
     @PostMapping
     suspend fun createAccount(@RequestBody request: CreateAccountRequest) = coroutineScope {
-        supervisorScope {
-
-        }
         log.info { "POST create account request: $request" }
         val account = accountCommandService.handle(request.toCommand())
         ResponseEntity.ok(account)
@@ -38,6 +35,28 @@ class AccountController(
         val account = accountQueryService.handle(GetAccountByIdQuery(id))
         ResponseEntity.ok(account)
     }
+
+    @PutMapping(path = ["/deposit/{id}"])
+    suspend fun depositBalance(@PathVariable id: UUID, @RequestBody request: DepositBalanceRequest) = coroutineScope {
+        log.info { "POST create account request: $request" }
+        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+        ResponseEntity.ok(account)
+    }
+
+    @PutMapping(path = ["/withdraw/{id}"])
+    suspend fun withdrawBalance(@PathVariable id: UUID, @RequestBody request: WithdrawBalanceRequest) = coroutineScope {
+        log.info { "POST create account request: $request" }
+        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+        ResponseEntity.ok(account)
+    }
+
+    @PutMapping(path = ["/status/{id}"])
+    suspend fun updateStatus(@PathVariable id: UUID, @RequestBody request: ChangeAccountStatusRequest) = coroutineScope {
+        log.info { "POST create account request: $request" }
+        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+        ResponseEntity.ok(account)
+    }
+
 
     private companion object {
         private val log = KotlinLogging.logger { }
