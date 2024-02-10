@@ -4,12 +4,15 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.c
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.of
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.toOutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.toStatusChangedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.OutboxPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.outbox.persistance.OutboxRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.EmailVerificationException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.EmailVerifierClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
@@ -24,35 +27,45 @@ class AccountCommandServiceImpl(
     private val tx: TransactionalOperator,
     private val outboxPublisher: OutboxPublisher,
     private val serializer: Serializer,
+    private val emailVerifierClient: EmailVerifierClient
 ) : AccountCommandService {
 
     private val publisherScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override suspend fun handle(command: CreateAccountCommand): Account = withContext(Dispatchers.IO) {
+        emailVerifierClient.verifyEmail(command.email) ?: throw EmailVerificationException(command.email)
+
         val (savedAccount, event) = tx.executeAndAwait {
             val savedAccount = accountRepository.createAccount(command.toAccount())
             log.info { "saved account: $savedAccount" }
             val domainEvent = AccountCreatedEvent.of(account = savedAccount)
-            val outboxEvent = outboxRepository.insert(domainEvent.toOutboxEvent(serializer.serializeToBytes(domainEvent)))
+            val outboxEvent =
+                outboxRepository.insert(domainEvent.toOutboxEvent(serializer.serializeToBytes(domainEvent)))
             Pair(savedAccount, outboxEvent)
         }
 
-        // Publish event
-//        publishOutboxEvent(event)
         publisherScope.launch { publishOutboxEvent(event) }
         savedAccount
     }
 
 
     override suspend fun handle(command: ChangeAccountStatusCommand): Account = withContext(Dispatchers.IO) {
-        tx.executeAndAwait {
+        val (account, event) = tx.executeAndAwait {
             val account = accountRepository.getAccountById(command.accountId)
                 ?: throw AccountNotFoundException(command.accountId.string())
 
-            val updated = accountRepository.updateAccount(account.copy(status = command.status))
-            log.info { "updated account: $updated" }
-            updated
+            val updatedAccount = accountRepository.updateAccount(account.copy(status = command.status))
+            log.info { "updated account: $updatedAccount" }
+
+            val domainEvent = updatedAccount.toStatusChangedEvent()
+            val outboxEvent = outboxRepository.insert(
+                domainEvent.toOutboxEvent(serializer.serializeToBytes(domainEvent))
+            )
+            Pair(updatedAccount, outboxEvent)
         }
+
+        publisherScope.launch { publishOutboxEvent(event) }
+        account
     }
 
     override suspend fun handle(command: ChangeContactInfoCommand): Account {

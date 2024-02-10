@@ -28,10 +28,15 @@ data class AccountEntity(
     @field:Version @field:Column("version") val version: Long = 0,
     @LastModifiedDate @field:Column("updated_at") val updatedAt: Instant? = null,
     @CreatedDate @field:Column("created_at") val createdAt: Instant? = null,
-
-    @field:Transient val isUpdated: Boolean = false,
 ) : Serializable, Persistable<UUID> {
-    companion object {}
+
+    @field:Transient
+    var isUpdated: Boolean = false
+
+    fun updated(updated: Boolean): AccountEntity {
+        isUpdated = updated
+        return this
+    }
 
     override fun getId(): UUID? {
         return accountId
@@ -40,6 +45,8 @@ data class AccountEntity(
     override fun isNew(): Boolean {
         return !isUpdated
     }
+
+    companion object {}
 }
 
 fun AccountEntity.toAccount(): Account {
@@ -84,6 +91,5 @@ fun Account.toAccountEntity(isUpdated: Boolean = false): AccountEntity = Account
     version = this.version,
     updatedAt = this.updatedAt,
     createdAt = this.createdAt,
-    isUpdated = isUpdated
-)
+).updated(isUpdated)
 
