@@ -2,10 +2,10 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contract
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.*
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class AccountHttpResponse(
-    val accountId: AccountId,
+    val accountId: AccountId?,
     val contactInfo: ContactInfo = ContactInfo(),
     val personalInfo: PersonalInfo = PersonalInfo(),
     val address: Address = Address(),
@@ -13,8 +13,8 @@ data class AccountHttpResponse(
     val status: AccountStatus = AccountStatus.FREE,
 
     val version: Long = 0,
-    val updatedAt: OffsetDateTime? = null,
-    val createdAt: OffsetDateTime? = null,
+    val updatedAt: Instant? = null,
+    val createdAt: Instant? = null,
 ) {
     companion object
 }

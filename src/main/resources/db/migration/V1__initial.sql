@@ -9,8 +9,8 @@ DROP TABLE IF EXISTS microservices.product_items CASCADE;
 CREATE TABLE IF NOT EXISTS microservices.accounts
 (
     id               UUID PRIMARY KEY,
-    email            VARCHAR(60),
-    phone            VARCHAR(60),
+    email            VARCHAR(60) UNIQUE,
+    phone            VARCHAR(60) UNIQUE,
     country          VARCHAR(255),
     city             VARCHAR(255),
     post_code        VARCHAR(255),
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS microservices.accounts
     balance_amount   BIGINT                   NOT NULL DEFAULT 0,
     balance_currency VARCHAR(10),
 
-    status           VARCHAR(60)              NOT NULL CHECK ( status <> '' ),
+    status           VARCHAR(60),
     version          BIGINT                   NOT NULL DEFAULT 0,
     created_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP

@@ -2,7 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.AccountRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import org.springframework.stereotype.Service
 
 

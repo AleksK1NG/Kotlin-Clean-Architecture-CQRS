@@ -1,6 +1,6 @@
 spring:
   application:
-    name: orders_microservice
+    name: account_microservice
   datasource:
     url: jdbc:postgresql://localhost:5432/microservices
     username: postgres
@@ -42,3 +42,9 @@ logging:
   level:
     io.r2dbc.postgresql.PARAM: debug
     io.r2dbc.postgresql.QUERY: debug
+
+
+# https://localhost:8080/v3/api-docs.yaml
+# http://localhost:8080/webjars/swagger-ui/index.html#/
+springdoc:
+  use-management-port: false
