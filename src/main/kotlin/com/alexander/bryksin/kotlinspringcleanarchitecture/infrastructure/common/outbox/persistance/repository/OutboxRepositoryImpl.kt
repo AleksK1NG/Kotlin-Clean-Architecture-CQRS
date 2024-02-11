@@ -81,7 +81,8 @@ class OutboxRepositoryImpl(
                 .fetch()
                 .rowsUpdated()
                 .awaitSingle()
-            log.info { "rowsDeleted: $rowsDeleted" }
+
+            log.info { "eventId:${event.eventId} rowsDeleted: $rowsDeleted" }
         }
 
         event

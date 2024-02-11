@@ -35,9 +35,9 @@ class AccountCommandServiceImpl(
     override suspend fun handle(command: CreateAccountCommand): Account = withContext(Dispatchers.IO) {
         validateAndVerifyEmail(command.email)
 
-        val (savedAccount, event) = tx.executeAndAwait {
-            val savedAccount = accountRepository.createAccount(command.toAccount())
-            log.info { "saved account: $savedAccount" }
+        val (account, event) = tx.executeAndAwait {
+            val savedAccount = accountRepository.saveAccount(command.toAccount())
+
             val domainEvent = AccountCreatedEvent.of(account = savedAccount)
             val outboxEvent = outboxRepository.insert(
                 domainEvent.toOutboxEvent(serializer.serializeToBytes(domainEvent))
@@ -45,8 +45,8 @@ class AccountCommandServiceImpl(
             AccountWithEvent(savedAccount, outboxEvent)
         }
 
-//        publisherScope.launch { publishOutboxEvent(event) }
-        savedAccount
+        publisherScope.launch { publishOutboxEvent(event) }
+        account
     }
 
 
@@ -55,7 +55,6 @@ class AccountCommandServiceImpl(
             val account = getAccountById(command.accountId)
 
             val updatedAccount = accountRepository.updateAccount(account.copy(status = command.status))
-            log.info { "updated account: $updatedAccount" }
 
             val domainEvent = updatedAccount.toStatusChangedEvent()
             val outboxEvent = outboxRepository.insert(
@@ -74,7 +73,6 @@ class AccountCommandServiceImpl(
             val account = getAccountById(command.accountId)
 
             val updatedAccount = accountRepository.updateAccount(account.copy(contactInfo = command.contactInfo))
-            log.info { "updated account: $updatedAccount" }
 
             val domainEvent = updatedAccount.toContactInfoChangedEvent()
             val outboxEvent = outboxRepository.insert(
@@ -89,14 +87,12 @@ class AccountCommandServiceImpl(
     }
 
     override suspend fun handle(command: DepositBalanceCommand): Account = withContext(Dispatchers.IO) {
-
         validateTransaction(command.accountId, command.transactionId)
 
         val (account, event) = tx.executeAndAwait {
             val account = getAccountById(command.accountId)
 
             val updatedAccount = accountRepository.updateAccount(account.depositBalance(command.balance.amount))
-            log.info { "updated account: $updatedAccount" }
 
             val domainEvent = updatedAccount.toBalanceDepositedEvent()
             val outboxEvent = outboxRepository.insert(
@@ -111,14 +107,12 @@ class AccountCommandServiceImpl(
     }
 
     override suspend fun handle(command: WithdrawBalanceCommand): Account = withContext(Dispatchers.IO) {
-
         validateTransaction(command.accountId, command.transactionId)
 
         val (account, event) = tx.executeAndAwait {
             val account = getAccountById(command.accountId)
 
             val updatedAccount = accountRepository.updateAccount(account.withdrawBalance(command.balance.amount))
-            log.info { "updated account: $updatedAccount" }
 
             val domainEvent = updatedAccount.toBalanceWithdrawEvent()
             val outboxEvent = outboxRepository.insert(
@@ -138,7 +132,6 @@ class AccountCommandServiceImpl(
             account.changePersonalInfo(command.personalInfo)
 
             val updatedAccount = accountRepository.updateAccount(account.changePersonalInfo(command.personalInfo))
-            log.info { "updated account: $updatedAccount" }
 
             val domainEvent = updatedAccount.toPersonalInfoUpdatedEvent()
             val outboxEvent = outboxRepository.insert(

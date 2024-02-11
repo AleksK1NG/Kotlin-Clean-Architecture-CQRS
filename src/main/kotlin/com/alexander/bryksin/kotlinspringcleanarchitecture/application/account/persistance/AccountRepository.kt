@@ -7,4 +7,6 @@ interface AccountRepository {
     suspend fun createAccount(account: Account): Account
     suspend fun updateAccount(account: Account): Account
     suspend fun getAccountById(id: AccountId): Account?
+
+    suspend fun saveAccount(account: Account): Account
 }
