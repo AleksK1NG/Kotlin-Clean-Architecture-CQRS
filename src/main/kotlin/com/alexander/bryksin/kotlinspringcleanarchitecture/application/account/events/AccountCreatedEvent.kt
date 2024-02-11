@@ -6,7 +6,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Address
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.ContactInfo
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.PersonalInfo
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import java.time.Instant
 import java.util.*
 
@@ -18,7 +18,7 @@ data class AccountCreatedEvent(
     val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) {
+) : AccountEvent {
     companion object {
         const val ACCOUNT_CREATED_EVENT_V1 = "ACCOUNT_CREATED_EVENT_V1"
     }

@@ -1,6 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 

@@ -48,3 +48,9 @@ logging:
 # http://localhost:8080/webjars/swagger-ui/index.html#/
 springdoc:
   use-management-port: false
+
+schedulers:
+  outbox:
+    enable: true
+    initialDelayMillis: 3000
+    fixedRate: 1000

@@ -18,12 +18,12 @@ data class Account(
 ) {
 
 
-    fun incBalance(amount: Long): Account {
+    fun depositBalance(amount: Long): Account {
         val newBalance = this.balance.copy(amount = (this.balance.amount + amount))
         return this.copy(balance = newBalance)
     }
 
-    fun decBalance(amount: Long): Account {
+    fun withdrawBalance(amount: Long): Account {
         if ((this.balance.amount - amount) < 0) throw InvalidAmountException(accountId?.string() ?: "", amount)
         val newBalance = this.balance.copy(amount = (this.balance.amount - amount))
         return this.copy(balance = newBalance)

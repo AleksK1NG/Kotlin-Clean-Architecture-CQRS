@@ -1,6 +1,6 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.outbox.persistance.entity
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.common.outbox.persistance.entity
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table

@@ -11,7 +11,7 @@ class EmailVerifierClientImpl : EmailVerifierClient {
     override suspend fun verifyEmail(email: String): Boolean {
         delay(300)
         log.info { "email verified: $email" }
-        return email.isBlank() && email.contains("@")
+        return email.isBlank()
     }
 
     private companion object {

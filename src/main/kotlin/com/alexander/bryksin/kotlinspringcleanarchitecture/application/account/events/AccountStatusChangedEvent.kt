@@ -4,7 +4,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.e
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountStatus
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import java.time.Instant
 import java.util.*
 
@@ -14,7 +14,7 @@ data class AccountStatusChangedEvent(
     val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) {
+): AccountEvent {
     companion object {
         const val ACCOUNT_STATUS_CHANGED_V1 = "ACCOUNT_STATUS_CHANGED_V1"
     }

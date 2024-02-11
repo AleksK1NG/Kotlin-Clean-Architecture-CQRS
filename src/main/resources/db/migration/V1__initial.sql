@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS microservices.outbox_table
     event_id     UUID PRIMARY KEY,
     event_type   VARCHAR(250)             NOT NULL CHECK ( event_type <> '' ),
     aggregate_id VARCHAR(250)             NOT NULL CHECK ( aggregate_id <> '' ),
-    version      SERIAL                   NOT NULL,
+    version      BIGINT                   NOT NULL,
     data         BYTEA,
     timestamp    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

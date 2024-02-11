@@ -2,8 +2,11 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.PaymentClient
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.stereotype.Component
 
+@Component
 class PaymentClientImpl : PaymentClient {
+
     override suspend fun verifyPaymentTransaction(accountId: String, transactionId: String): Boolean {
        return accountId.isNotEmpty() && transactionId.isNotEmpty()
     }
