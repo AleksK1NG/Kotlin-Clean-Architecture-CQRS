@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import javax.security.auth.login.AccountNotFoundException
+import kotlin.coroutines.CoroutineContext
 
 @Service
 class AccountCommandServiceImpl(
@@ -32,7 +33,7 @@ class AccountCommandServiceImpl(
     private val paymentClient: PaymentClient
 ) : AccountCommandService {
 
-    override suspend fun handle(command: CreateAccountCommand): Account = withContext(Dispatchers.IO) {
+    override suspend fun handle(command: CreateAccountCommand): Account = serviceScope {
         validateAndVerifyEmail(command.email)
 
         val (account, event) = tx.executeAndAwait {
@@ -50,7 +51,7 @@ class AccountCommandServiceImpl(
     }
 
 
-    override suspend fun handle(command: ChangeAccountStatusCommand): Account = withContext(Dispatchers.IO) {
+    override suspend fun handle(command: ChangeAccountStatusCommand): Account = serviceScope {
         val (account, event) = tx.executeAndAwait {
             val account = getAccountById(command.accountId)
 
@@ -68,7 +69,7 @@ class AccountCommandServiceImpl(
         account
     }
 
-    override suspend fun handle(command: ChangeContactInfoCommand): Account = withContext(Dispatchers.IO) {
+    override suspend fun handle(command: ChangeContactInfoCommand): Account = serviceScope {
         val (account, event) = tx.executeAndAwait {
             val account = getAccountById(command.accountId)
 
@@ -86,7 +87,7 @@ class AccountCommandServiceImpl(
         account
     }
 
-    override suspend fun handle(command: DepositBalanceCommand): Account = withContext(Dispatchers.IO) {
+    override suspend fun handle(command: DepositBalanceCommand): Account = serviceScope {
         validateTransaction(command.accountId, command.transactionId)
 
         val (account, event) = tx.executeAndAwait {
@@ -106,7 +107,7 @@ class AccountCommandServiceImpl(
         account
     }
 
-    override suspend fun handle(command: WithdrawBalanceCommand): Account = withContext(Dispatchers.IO) {
+    override suspend fun handle(command: WithdrawBalanceCommand): Account = serviceScope {
         validateTransaction(command.accountId, command.transactionId)
 
         val (account, event) = tx.executeAndAwait {
@@ -126,7 +127,7 @@ class AccountCommandServiceImpl(
         account
     }
 
-    override suspend fun handle(command: UpdatePersonalInfoCommand): Account = withContext(Dispatchers.IO) {
+    override suspend fun handle(command: UpdatePersonalInfoCommand): Account = serviceScope {
         val (account, event) = tx.executeAndAwait {
             val account = getAccountById(command.accountId)
             account.changePersonalInfo(command.personalInfo)
@@ -145,7 +146,7 @@ class AccountCommandServiceImpl(
         account
     }
 
-    private suspend fun publishOutboxEvent(event: OutboxEvent) = withContext(Dispatchers.IO) {
+    private suspend fun publishOutboxEvent(event: OutboxEvent) = serviceScope {
         try {
             outboxRepository.deleteWithLock(event) { outboxPublisher.publish(event) }
         } catch (e: Exception) {
@@ -172,6 +173,18 @@ class AccountCommandServiceImpl(
 
     private suspend fun getAccountById(accountId: AccountId): Account =
         accountRepository.getAccountById(accountId) ?: throw AccountNotFoundException(accountId.string())
+
+
+
+    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
+
+    private suspend fun <T> serviceScope(
+        context: CoroutineContext? = null,
+        block: suspend (CoroutineScope) -> T
+    ): T {
+        return if (context != null) block(scope + context) else return block(scope)
+    }
+
 
     private companion object {
         private val log = KotlinLogging.logger { }

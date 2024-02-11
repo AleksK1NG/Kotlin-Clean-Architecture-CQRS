@@ -7,13 +7,13 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.accoun
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.toAccount
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.toAccountEntity
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.withContext
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.awaitSingleOrNull
 import org.springframework.stereotype.Repository
 import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 
 @Repository
@@ -24,36 +24,24 @@ class AccountRepositoryImpl(
 
 
     override suspend fun saveAccount(account: Account): Account = withContext(Dispatchers.IO) {
-        try {
-            val insertResult = dbClient.sql(INSERT_ACCOUNT_QUERY.trimMargin())
-                .bindValues(account.copy(version = 1).toPostgresEntityMap())
-                .fetch()
-                .rowsUpdated()
-                .awaitSingle()
-
-            log.info { "Saved account into database: $insertResult" }
-        } catch (e: Exception) {
-            log.error { "error while saving account into database: ${e.message}" }
-            throw e
-        }
-
+        val rowsUpdated = dbClient.sql(INSERT_ACCOUNT_QUERY.trimMargin())
+            .bindValues(account.copy(version = 1).toPostgresEntityMap())
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
+        // validation
         account
     }
 
 
     override suspend fun createAccount(account: Account): Account = withContext(Dispatchers.IO) {
-        try {
-            val entity = account.toAccountEntity()
-            val savedAccount = db.save(entity)
-            log.info { "saved account: $savedAccount" }
-            savedAccount.toAccount()
-        } catch (e: Exception) {
-            log.error { "error creating new account: ${e.message}" }
-            throw e
-        }
+        val entity = account.toAccountEntity()
+        val savedAccount = db.save(entity)
+        log.info { "saved account: $savedAccount" }
+        savedAccount.toAccount()
     }
 
-    override suspend fun updateAccount(account: Account): Account = withContext(Dispatchers.IO) {
+    override suspend fun updateAccount(account: Account): Account = repositoryScope(Dispatchers.IO) {
         try {
             val rowsUpdated = dbClient.sql(OPTIMISTIC_UPDATE_QUERY.trimMargin())
                 .bindValues(account.copy(updatedAt = Instant.now()).toPostgresEntityMap(withOptimisticLock = true))
@@ -62,7 +50,7 @@ class AccountRepositoryImpl(
                 .awaitSingle()
 
             if (rowsUpdated == 0L) {
-                log.error { "optimistic updated error account: $account" }
+                log.error { "optimistic lock error while updating account: ${account.accountId?.id}" }
                 throw AccountOptimisticUpdateException(account)
             }
 
@@ -87,6 +75,15 @@ class AccountRepositoryImpl(
 
         log.info { "get account from database: $account" }
         account
+    }
+
+    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
+
+    private suspend fun <T> repositoryScope(
+        context: CoroutineContext? = null,
+        block: suspend (CoroutineScope) -> T
+    ): T {
+        return if (context != null) block(scope + context) else return block(scope)
     }
 
 
