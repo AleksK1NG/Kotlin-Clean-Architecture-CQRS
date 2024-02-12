@@ -24,57 +24,37 @@ class OutboxRepositoryImpl(
     private val tx: TransactionalOperator
 ) : OutboxRepository {
 
-    override suspend fun insert(event: OutboxEvent): OutboxEvent = withContext(Dispatchers.IO) {
-        try {
-            val savedEventId = dbClient.sql(INSERT_OUTBOX_EVENT_QUERY.trimMargin())
-                .bindValues(event.toPostgresValuesMap())
-                .map { row, _ -> row.get("event_id", String::class.java) }
-                .one()
-                .awaitSingleOrNull()
-
-            log.info { "saved event: $savedEventId" }
-
-            event
-        } catch (e: Exception) {
-            log.error { "error inserting event: ${e.message}" }
-            throw e
-        }
+    override suspend fun insert(event: OutboxEvent): OutboxEvent = repositoryScope {
+        dbClient.sql(INSERT_OUTBOX_EVENT_QUERY.trimMargin())
+            .bindValues(event.toPostgresValuesMap())
+            .map { row, _ -> row.get("event_id", String::class.java) }
+            .one()
+            .awaitSingleOrNull()
+            .also { log.info { "saved event: $it" } }
+            .let { _ -> event }
     }
 
     override suspend fun deleteWithLock(
         event: OutboxEvent,
         callback: suspend (event: OutboxEvent) -> Unit
-    ): OutboxEvent = withContext(Dispatchers.IO) {
+    ): OutboxEvent = repositoryScope {
         tx.executeAndAwait {
-            val lockedEventId = dbClient.sql(GET_OUTBOX_EVENT_BY_ID_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
-                .bind("eventId", event.eventId!!)
+            dbClient.sql(GET_OUTBOX_EVENT_BY_ID_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
+                .bindValues(mutableMapOf("eventId" to event.eventId))
                 .map { row, _ -> row.get("event_id", String::class.java) }
                 .one()
                 .awaitSingleOrNull()
-
-            log.info { "selected for update event id: ${event.eventId}, skip locked: $lockedEventId" }
-            if (lockedEventId == null) return@executeAndAwait
-
-            callback(event)
-
-            val rowsDeleted = dbClient.sql(DELETE_OUTBOX_EVENT_BY_ID_QUERY)
-                .bind("eventId", event.eventId)
-                .fetch()
-                .rowsUpdated()
-                .awaitSingle()
-
-            log.info { "eventId:${event.eventId} rowsDeleted: $rowsDeleted" }
+                .let { callback(event) }
+                .let { deleteOutboxEvent(event) }
+                .let { _ -> event }
         }
-
-        event
     }
+
 
     override suspend fun deleteEventsWithLock(
         batchSize: Int,
         callback: suspend (event: OutboxEvent) -> Unit
     ): Unit = repositoryScope {
-        log.debug { "starting to publish events with lock count: $batchSize" }
-
         tx.executeAndAwait {
             dbClient.sql(GET_OUTBOX_EVENTS_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
                 .bind("limit", batchSize)
@@ -83,19 +63,19 @@ class OutboxRepositoryImpl(
                 .asFlow()
                 .onStart { log.info { "start publishing outbox events: $batchSize" } }
                 .onEach { callback(it) }
-                .onEach { event ->
-                    dbClient.sql(DELETE_OUTBOX_EVENT_BY_ID_QUERY)
-                        .bind("eventId", event.eventId!!)
-                        .fetch()
-                        .rowsUpdated()
-                        .awaitSingle()
-                        .also { rowsDeleted -> log.info { "eventId: ${event.eventId} rowsDeleted: $rowsDeleted" } }
-                }
+                .onEach { event -> deleteOutboxEvent(event) }
                 .onCompletion { log.info { "completed publishing outbox events: $batchSize" } }
                 .collect()
         }
+    }
 
-        log.debug { "finished publishing events with lock count: $batchSize" }
+    private suspend fun deleteOutboxEvent(event: OutboxEvent) {
+        dbClient.sql(DELETE_OUTBOX_EVENT_BY_ID_QUERY)
+            .bindValues(mutableMapOf("eventId" to event.eventId))
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
+            .also { rowsDeleted -> log.info { "eventId: ${event.eventId} rowsDeleted: $rowsDeleted" } }
     }
 
 

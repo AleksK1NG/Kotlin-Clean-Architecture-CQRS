@@ -15,7 +15,6 @@ class SerializerImpl(private val objectMapper: ObjectMapper) : Serializer {
         throw SerializationException(ex, clazz)
     }
 
-
     override fun serializeToBytes(data: Any): ByteArray = try {
         objectMapper.writeValueAsBytes(data)
     } catch (ex: Exception) {
