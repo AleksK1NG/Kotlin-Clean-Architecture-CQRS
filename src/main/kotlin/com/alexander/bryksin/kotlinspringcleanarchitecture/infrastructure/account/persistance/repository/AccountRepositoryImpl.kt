@@ -14,6 +14,7 @@ import org.springframework.r2dbc.core.awaitSingleOrNull
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Repository
@@ -22,14 +23,13 @@ class AccountRepositoryImpl(
     private val dbClient: DatabaseClient
 ) : AccountRepository {
 
-
     override suspend fun saveAccount(account: Account): Account = withContext(Dispatchers.IO) {
         val rowsUpdated = dbClient.sql(INSERT_ACCOUNT_QUERY.trimMargin())
             .bindValues(account.copy(version = 1).toPostgresEntityMap())
             .fetch()
             .rowsUpdated()
             .awaitSingle()
-        // validation
+        log.info { "saved account: $rowsUpdated, id: ${account.accountId?.id}" }
         account
     }
 
@@ -40,6 +40,7 @@ class AccountRepositoryImpl(
         log.info { "saved account: $savedAccount" }
         savedAccount.toAccount()
     }
+
 
     override suspend fun updateAccount(account: Account): Account = repositoryScope(Dispatchers.IO) {
         try {
@@ -61,31 +62,20 @@ class AccountRepositoryImpl(
         }
     }
 
-    override suspend fun getAccountById(id: AccountId): Account? = withContext(Dispatchers.IO) {
-        val account = dbClient.sql(
-            """SELECT id, email, phone, country, city, post_code,
-            | bio, image_url, balance_amount, balance_currency, status, 
-            | version, created_at, updated_at 
-            | FROM microservices.accounts a 
-            | WHERE id = :id""".trimMargin()
-        )
+    override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {
+        dbClient.sql(GET_ACCOUNT_BY_ID_QUERY.trimMargin())
             .bind("id", id.id)
             .map { row, _ -> row.toAccount() }
             .awaitSingleOrNull()
-
-        log.info { "get account from database: $account" }
-        account
+            .also { log.info { "get account by id result: $it" } }
     }
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 
     private suspend fun <T> repositoryScope(
-        context: CoroutineContext? = null,
+        context: CoroutineContext = EmptyCoroutineContext,
         block: suspend (CoroutineScope) -> T
-    ): T {
-        return if (context != null) block(scope + context) else return block(scope)
-    }
-
+    ): T = block(scope + context)
 
     private companion object {
         private val log = KotlinLogging.logger { }

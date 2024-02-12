@@ -7,6 +7,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.s
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -21,56 +22,49 @@ class AccountController(
 ) {
 
     @PostMapping
-    suspend fun createAccount(@RequestBody request: CreateAccountRequest) = coroutineScope {
-        log.info { "POST create account request: $request" }
-        val account = accountCommandService.handle(request.toCommand())
-        ResponseEntity.ok(account)
+    suspend fun createAccount(@RequestBody request: CreateAccountRequest) = controllerScope {
+        accountCommandService.handle(request.toCommand())
+            .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
     }
 
     @GetMapping(path = ["{id}"])
-    suspend fun getAccountById(@PathVariable id: UUID) = coroutineScope {
-        controllerScope {
-            launch { log.info { "NICE =D" } }
-        }
-        val account = accountQueryService.handle(GetAccountByIdQuery(id))
-        ResponseEntity.ok(account)
+    suspend fun getAccountById(@PathVariable id: UUID) = controllerScope {
+        accountQueryService.handle(GetAccountByIdQuery(id))
+            .let { ResponseEntity.status(HttpStatus.OK).body(it) }
     }
 
     @PutMapping(path = ["/deposit/{id}"])
-    suspend fun depositBalance(@PathVariable id: UUID, @RequestBody request: DepositBalanceRequest) = coroutineScope {
+    suspend fun depositBalance(@PathVariable id: UUID, @RequestBody request: DepositBalanceRequest) = controllerScope {
         log.info { "POST create account request: $request" }
         val account = accountCommandService.handle(request.toCommand(AccountId(id)))
         ResponseEntity.ok(account)
     }
 
     @PutMapping(path = ["/withdraw/{id}"])
-    suspend fun withdrawBalance(@PathVariable id: UUID, @RequestBody request: WithdrawBalanceRequest) = coroutineScope {
-        log.info { "POST create account request: $request" }
-        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-        ResponseEntity.ok(account)
-    }
+    suspend fun withdrawBalance(@PathVariable id: UUID, @RequestBody request: WithdrawBalanceRequest) =
+        controllerScope {
+            log.info { "POST create account request: $request" }
+            val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+            ResponseEntity.ok(account)
+        }
 
     @PutMapping(path = ["/status/{id}"])
-    suspend fun updateStatus(@PathVariable id: UUID, @RequestBody request: ChangeAccountStatusRequest) = coroutineScope {
-        log.info { "POST create account request: $request" }
-        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-        ResponseEntity.ok(account)
-    }
+    suspend fun updateStatus(@PathVariable id: UUID, @RequestBody request: ChangeAccountStatusRequest) =
+        controllerScope {
+            log.info { "POST create account request: $request" }
+            val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+            ResponseEntity.ok(account)
+        }
 
 
     private companion object {
         private val log = KotlinLogging.logger { }
     }
 
-    private val scope = CoroutineScope(Job() + Dispatchers.IO)
-    private suspend fun <R> controllerScope(block: CoroutineScope.() -> R): R {
-        return block(scope)
-    }
-}
+    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 
-
-class ApiScope(private val scope: CoroutineContext = SupervisorJob()) : CoroutineScope {
-    override val coroutineContext: CoroutineContext = scope
-
-
+    private suspend fun <T> controllerScope(
+        context: CoroutineContext? = null,
+        block: suspend (CoroutineScope) -> T
+    ): T = if (context != null) block(scope + context) else block(scope)
 }

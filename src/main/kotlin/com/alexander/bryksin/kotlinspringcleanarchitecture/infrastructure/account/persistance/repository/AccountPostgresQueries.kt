@@ -9,3 +9,9 @@ internal const val OPTIMISTIC_UPDATE_QUERY = """UPDATE microservices.accounts a
 internal const val INSERT_ACCOUNT_QUERY = """INSERT INTO microservices.accounts
                 | (id, email, phone, country, city, post_code, bio, image_url, balance_amount, balance_currency, status, version, created_at, updated_at) 
                 | VALUES (:id, :email, :phone, :country, :city, :post_code, :bio, :image_url, :balance_amount, :balance_currency, :status, :version, :created_at, :updated_at)"""
+
+internal const val GET_ACCOUNT_BY_ID_QUERY = """SELECT id, email, phone, country, city, post_code,
+            | bio, image_url, balance_amount, balance_currency, status, 
+            | version, created_at, updated_at 
+            | FROM microservices.accounts a 
+            | WHERE id = :id"""

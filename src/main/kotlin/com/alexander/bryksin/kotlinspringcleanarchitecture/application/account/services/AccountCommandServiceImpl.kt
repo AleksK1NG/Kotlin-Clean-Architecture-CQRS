@@ -34,7 +34,7 @@ class AccountCommandServiceImpl(
 ) : AccountCommandService {
 
     override suspend fun handle(command: CreateAccountCommand): Account = serviceScope {
-        validateAndVerifyEmail(command.email)
+        validateAndVerifyEmail(command.contactInfo.email)
 
         val (account, event) = tx.executeAndAwait {
             val savedAccount = accountRepository.saveAccount(command.toAccount())
@@ -175,15 +175,12 @@ class AccountCommandServiceImpl(
         accountRepository.getAccountById(accountId) ?: throw AccountNotFoundException(accountId.string())
 
 
-
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 
     private suspend fun <T> serviceScope(
         context: CoroutineContext? = null,
         block: suspend (CoroutineScope) -> T
-    ): T {
-        return if (context != null) block(scope + context) else return block(scope)
-    }
+    ): T = if (context != null) block(scope + context) else block(scope)
 
 
     private companion object {

@@ -4,30 +4,23 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Address
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.ContactInfo
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.PersonalInfo
 import java.time.Instant
 import java.util.*
 
 data class CreateAccountCommand(
-    val email: String,
-    val phone: String,
-    val country: String,
-    val city: String,
-    val postCode: String,
+    val contactInfo: ContactInfo = ContactInfo(),
+    val personalInfo: PersonalInfo = PersonalInfo(),
+    val address: Address = Address(),
 ) {
     companion object {}
 }
 
 fun CreateAccountCommand.toAccount() = Account(
     accountId = AccountId(id = UUID.randomUUID()),
-    contactInfo = ContactInfo(
-        email = this.email,
-        phone = this.phone,
-    ),
-    address = Address(
-        country = this.country,
-        city = this.city,
-        postCode = this.postCode,
-    ),
+    contactInfo = contactInfo,
+    address = address,
+    personalInfo = personalInfo,
     updatedAt = Instant.now(),
     createdAt = Instant.now()
 )
