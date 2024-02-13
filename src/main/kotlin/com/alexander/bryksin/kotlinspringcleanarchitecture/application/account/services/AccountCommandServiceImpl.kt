@@ -14,7 +14,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.EmailVerifierClient
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.PaymentClient
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.publisher.kafkaTopic
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
@@ -149,13 +148,7 @@ class AccountCommandServiceImpl(
 
     private suspend fun publishOutboxEvent(event: OutboxEvent) = serviceScope {
         try {
-            outboxRepository.deleteWithLock(event) {
-                outboxPublisher.publish(
-                    event.kafkaTopic(),
-                    event.aggregateId,
-                    event,
-                )
-            }
+            outboxRepository.deleteWithLock(event) { outboxPublisher.publish(event) }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             log.error { "Error while publishing outbox event: ${event.eventId}, error: ${e.message}" }

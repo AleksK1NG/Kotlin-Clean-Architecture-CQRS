@@ -10,14 +10,22 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
 
+
 @Component
 class OutboxPublisherImpl(
     private val kafkaTemplate: KafkaTemplate<String, ByteArray>,
     private val serializer: Serializer
 ) : OutboxPublisher {
 
-    override suspend fun publish(event: OutboxEvent) {
-        log.info { "Publishing outbox event: $event" }
+    override suspend fun publish(event: OutboxEvent, headers: Map<String, ByteArray>) {
+        try {
+            val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, serializer.serializeToBytes(event))
+            headers.forEach { (key, value) -> msg.headers().add(key, value) }
+            kafkaTemplate.send(msg).await().also { log.info { "Published outbox event: $it" } }
+        } catch (e: Exception) {
+            log.error { "error while publishing event: ${e.message}" }
+            throw e
+        }
     }
 
     override suspend fun publish(events: List<OutboxEvent>) {

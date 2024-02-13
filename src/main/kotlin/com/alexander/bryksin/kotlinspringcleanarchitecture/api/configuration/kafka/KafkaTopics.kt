@@ -11,12 +11,32 @@ class KafkaTopics {
 
     var accountCreated: KafkaTopicData = KafkaTopicData()
     var accountCreatedRetry: KafkaTopicData = KafkaTopicData()
+    var accountStatusChanged: KafkaTopicData = KafkaTopicData()
+    var accountStatusChangedRetry: KafkaTopicData = KafkaTopicData()
+    var accountBalanceDeposited: KafkaTopicData = KafkaTopicData()
+    var accountBalanceDepositedRetry: KafkaTopicData = KafkaTopicData()
+    var accountBalanceWithdraw: KafkaTopicData = KafkaTopicData()
+    var accountBalanceWithdrawRetry: KafkaTopicData = KafkaTopicData()
+    var accountContactInfoChanged: KafkaTopicData = KafkaTopicData()
+    var accountContactInfoChangedRetry: KafkaTopicData = KafkaTopicData()
+    var accountInfoUpdated: KafkaTopicData = KafkaTopicData()
+    var accountInfoUpdatedRetry: KafkaTopicData = KafkaTopicData()
     var deadLetterQueue: KafkaTopicData = KafkaTopicData()
 
 
     fun getTopics() = listOf(
         accountCreated,
         accountCreatedRetry,
+        accountStatusChanged,
+        accountStatusChangedRetry,
+        accountBalanceDeposited,
+        accountBalanceDepositedRetry,
+        accountBalanceWithdraw,
+        accountBalanceWithdrawRetry,
+        accountContactInfoChanged,
+        accountContactInfoChangedRetry,
+        accountInfoUpdated,
+        accountInfoUpdatedRetry,
         deadLetterQueue
     )
 
