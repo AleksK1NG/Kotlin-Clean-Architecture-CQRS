@@ -64,11 +64,51 @@ schedulers:
 
 topics:
   accountCreated:
-    name: account-created
+    name: account-created-v1
     partitions: 3
     replication: 1
   accountCreatedRetry:
-    name: account-created-retry
+    name: account-created-v1-retry
+    partitions: 3
+    replication: 1
+  accountStatusChanged:
+    name: account-status-changed-v1
+    partitions: 3
+    replication: 1
+  accountStatusChangedRetry:
+    name: account-status-changed-v1-retry
+    partitions: 3
+    replication: 1
+  accountBalanceDeposited:
+    name: account-balance-deposited-v1
+    partitions: 3
+    replication: 1
+  accountBalanceDepositedRetry:
+    name: account-balance-deposited-v1-retry
+    partitions: 3
+    replication: 1
+  accountBalanceWithdraw:
+    name: account-balance-withdraw-v1
+    partitions: 3
+    replication: 1
+  accountBalanceWithdrawRetry:
+    name: account-balance-withdraw-v1-retry
+    partitions: 3
+    replication: 1
+  accountContactInfoChanged:
+    name: account-contact-info-changed-v1
+    partitions: 3
+    replication: 1
+  accountContactInfoChangedRetry:
+    name: account-contact-info-changed-v1-retry
+    partitions: 3
+    replication: 1
+  accountInfoUpdated:
+    name: account-info-updated-v1
+    partitions: 3
+    replication: 1
+  accountInfoUpdatedRetry:
+    name: account-info-updated-v1-retry
     partitions: 3
     replication: 1
   deadLetterQueue:

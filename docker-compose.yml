@@ -19,7 +19,6 @@ services:
       - ./docker_data/microservices_pgdata:/var/lib/postgresql/data
     networks: [ "microservices" ]
 
-
   zoo1:
     image: confluentinc/cp-zookeeper:7.6.0
     hostname: zoo1
@@ -31,7 +30,7 @@ services:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zoo1:2888:3888
     volumes:
-      - "./zookeeper:/zookeeper"
+      - "./docker_data/zookeeper:/zookeeper"
     networks: [ "microservices" ]
 
   kafka1:
@@ -59,7 +58,7 @@ services:
     depends_on:
       - zoo1
     volumes:
-      - "./kafka_data:/kafka"
+      - "./docker_data/kafka_data:/kafka"
     networks: [ "microservices" ]
 
   kafka-ui:

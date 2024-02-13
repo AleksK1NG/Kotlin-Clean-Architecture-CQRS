@@ -15,9 +15,14 @@ class AccountConsumer {
         groupId = "\${kafka.consumer-group-id:account_microservice_group_id}",
         topics = [
             "\${topics.accountCreated.name}",
-            "\${topics.accountCreatedRetry.name}",
+            "\${topics.accountStatusChanged.name}",
+            "\${topics.accountBalanceDeposited.name}",
+            "\${topics.accountBalanceWithdraw.name}",
+            "\${topics.accountContactInfoChanged.name}",
+            "\${topics.accountInfoUpdated.name}",
+            "\${topics.accountInfoUpdated.name}",
         ],
-        id = "orders-consumer"
+        id = "account_microservice_group_id"
     )
     fun process(ack: Acknowledgment, consumerRecord: ConsumerRecord<String, ByteArray>) = runBlocking {
         log.info { "processing ${consumerRecord.topic()} value: ${String(consumerRecord.value())}" }
