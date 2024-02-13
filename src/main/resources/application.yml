@@ -15,6 +15,11 @@ spring:
       max-size: 10
       max-idle-time: 10m
 
+  kafka:
+    consumer:
+      group-id: account_microservice_group_id
+    bootstrap-servers: localhost:9092
+
   flyway:
     baseline-on-migrate: true
     enabled: true
@@ -55,3 +60,18 @@ schedulers:
     initialDelayMillis: 3000
     fixedRate: 1000
     batchSize: 10
+
+
+topics:
+  accountCreated:
+    name: account-created
+    partitions: 3
+    replication: 1
+  accountCreatedRetry:
+    name: account-created-retry
+    partitions: 3
+    replication: 1
+  deadLetterQueue:
+    name: dead-letter-queue
+    partitions: 3
+    replication: 1
