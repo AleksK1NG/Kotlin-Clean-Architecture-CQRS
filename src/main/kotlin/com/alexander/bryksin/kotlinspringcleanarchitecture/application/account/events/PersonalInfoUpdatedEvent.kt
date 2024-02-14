@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.PersonalInfoUpdatedEvent.Companion.ACCOUNT_PERSONAL_INFO_UPDATED_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.PersonalInfo
@@ -14,16 +15,15 @@ data class PersonalInfoUpdatedEvent(
     val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) : AccountEvent{
+) : AccountEvent {
     companion object {
         const val ACCOUNT_PERSONAL_INFO_UPDATED_V1 = "ACCOUNT_PERSONAL_INFO_UPDATED_V1"
     }
 }
 
-
 fun Account.toPersonalInfoUpdatedEvent() = PersonalInfoUpdatedEvent(
     accountId = this.accountId,
-   personalInfo = this.personalInfo,
+    personalInfo = this.personalInfo,
     version = this.version,
     updatedAt = this.updatedAt,
     createdAt = this.createdAt,
@@ -36,4 +36,13 @@ fun PersonalInfoUpdatedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = Outbo
     data = data,
     version = this.version,
     timestamp = Instant.now(),
+)
+
+fun PersonalInfoUpdatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
+    eventId = UUID.randomUUID(),
+    eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
+    aggregateId = this.accountId?.id.toString(),
+    version = this.version,
+    timestamp = Instant.now(),
+    data = serializer.serializeToBytes(this)
 )

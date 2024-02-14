@@ -1,7 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.schedulers
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.OutboxPublisher
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(prefix = "schedulers", value = ["outbox.enable"], havingValue = "true")
 class OutboxScheduler(
     private val outboxRepository: OutboxRepository,
-    private val publisher: OutboxPublisher,
+    private val publisher: EventPublisher,
 ) {
 
     @Value("\${scheduler.outbox.batchSize}")

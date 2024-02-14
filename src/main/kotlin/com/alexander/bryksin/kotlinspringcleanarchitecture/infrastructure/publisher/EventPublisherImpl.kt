@@ -1,6 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.publisher
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.OutboxPublisher
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component
 
 
 @Component
-class OutboxPublisherImpl(
+class EventPublisherImpl(
     private val kafkaTemplate: KafkaTemplate<String, ByteArray>,
     private val serializer: Serializer
-) : OutboxPublisher {
+) : EventPublisher {
 
     override suspend fun publish(event: OutboxEvent, headers: Map<String, ByteArray>) {
         try {
