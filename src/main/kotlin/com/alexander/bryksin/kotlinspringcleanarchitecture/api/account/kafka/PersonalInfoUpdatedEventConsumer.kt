@@ -1,8 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountStatusChangedEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.PersonalInfoUpdatedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventsHandler
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
@@ -11,19 +10,19 @@ import org.springframework.stereotype.Component
 
 
 @Component
-class AccountStatusChangedEventConsumer(
-    private val accountEventsHandler: AccountEventsHandler,
+class PersonalInfoUpdatedEventConsumer(
     private val eventProcessor: EventProcessor,
-) {
+    private val accountEventsHandler: AccountEventsHandler,
+)  {
 
     @KafkaListener(
         groupId = "\${kafka.consumer-group-id:account_microservice_group_id}",
-        topics = ["\${topics.accountStatusChanged.name}"],
+        topics = ["\${topics.accountInfoUpdated.name}"],
     )
     fun process(ack: Acknowledgment, record: ConsumerRecord<String, ByteArray>) = eventProcessor.runProcess(
         ack = ack,
         consumerRecord = record,
-        deserializationClazz = AccountStatusChangedEvent::class.java,
+        deserializationClazz = PersonalInfoUpdatedEvent::class.java,
         onError = {}
     ) { event ->
         accountEventsHandler.on(event)
@@ -34,6 +33,5 @@ class AccountStatusChangedEventConsumer(
 
     private companion object {
         private val log = KotlinLogging.logger { }
-        private val unprocessableExceptions = setOf(SerializationException::class.java)
     }
 }

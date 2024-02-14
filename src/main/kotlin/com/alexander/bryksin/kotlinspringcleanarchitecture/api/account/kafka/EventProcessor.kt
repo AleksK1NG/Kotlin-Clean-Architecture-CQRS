@@ -13,7 +13,7 @@ import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Component
 
 @Component
-class EventConsumer(
+class EventProcessor(
     private val serializer: Serializer,
     private val accountEventsHandler: AccountEventsHandler,
     private val eventPublisher: EventPublisher,

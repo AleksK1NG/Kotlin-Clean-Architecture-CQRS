@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Service
@@ -24,9 +25,9 @@ class AccountQueryServiceImpl(
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 
     private suspend fun <T> serviceScope(
-        context: CoroutineContext? = null,
+        context: CoroutineContext = EmptyCoroutineContext,
         block: suspend (CoroutineScope) -> T
-    ): T = if (context != null) block(scope + context) else block(scope)
+    ): T = block(scope + context)
 
     private companion object {
         private val log = KotlinLogging.logger {  }
