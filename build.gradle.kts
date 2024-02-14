@@ -34,6 +34,9 @@ dependencies {
 	runtimeOnly("org.postgresql:postgresql")
 	runtimeOnly("org.postgresql:r2dbc-postgresql")
 
+	// MongoDB
+	implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.11.1")
+
 
 	// Coroutines
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")

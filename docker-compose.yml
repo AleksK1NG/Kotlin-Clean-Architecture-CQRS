@@ -19,6 +19,17 @@ services:
       - ./docker_data/microservices_pgdata:/var/lib/postgresql/data
     networks: [ "microservices" ]
 
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGODB_DATABASE: microservices
+    networks: [ "microservices" ]
+
   zoo1:
     image: confluentinc/cp-zookeeper:7.6.0
     hostname: zoo1

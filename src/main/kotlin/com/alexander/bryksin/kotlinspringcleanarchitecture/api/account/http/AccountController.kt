@@ -35,7 +35,10 @@ class AccountController(
     }
 
     @PutMapping(path = ["/deposit/{id}"])
-    suspend fun depositBalance(@PathVariable id: UUID, @RequestBody request: DepositBalanceRequest) = controllerScope {
+    suspend fun depositBalance(
+        @PathVariable id: UUID,
+        @RequestBody request: DepositBalanceRequest
+    ) = controllerScope {
         val account = accountCommandService.handle(request.toCommand(AccountId(id)))
         ResponseEntity.ok(account)
     }
