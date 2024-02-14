@@ -37,6 +37,7 @@ dependencies {
 
 	// Coroutines
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.7.3")
 
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.github.oshai:kotlin-logging-jvm:6.0.1")

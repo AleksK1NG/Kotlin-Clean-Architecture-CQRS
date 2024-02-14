@@ -20,7 +20,7 @@ class KafkaTopicsInitializer(
                 .map { NewTopic(it.name, it.partitions, it.replication.toShort()) }
                 .forEach {
                     kafkaAdmin.createOrModifyTopics(it)
-                        .also { log.info { "(KafkaTopicsInitializer) created or modified topic: $it" } }
+                    log.info { "(KafkaTopicsInitializer) created or modified topic: $it" }
                 }
         } catch (e: Exception) {
             log.error { "error while initializing kafka topics: ${e.message}" }

@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent.Companion.ACCOUNT_CREATED_EVENT_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Address
@@ -42,4 +43,12 @@ fun AccountCreatedEvent.toOutboxEvent(data: ByteArray) = OutboxEvent(
     version = this.version,
     timestamp = Instant.now(),
     data = data
+)
+fun AccountCreatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
+    eventId = UUID.randomUUID(),
+    eventType = ACCOUNT_CREATED_EVENT_V1,
+    aggregateId = this.accountId?.id.toString(),
+    version = this.version,
+    timestamp = Instant.now(),
+    data = serializer.serializeToBytes(this)
 )

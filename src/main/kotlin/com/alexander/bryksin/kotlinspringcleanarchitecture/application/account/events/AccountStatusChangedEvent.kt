@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountStatusChangedEvent.Companion.ACCOUNT_STATUS_CHANGED_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountStatus
@@ -35,4 +36,13 @@ fun AccountStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = Outb
     data = data,
     version = this.version,
     timestamp = Instant.now(),
+)
+
+fun AccountStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
+    eventId = UUID.randomUUID(),
+    eventType = ACCOUNT_STATUS_CHANGED_V1,
+    aggregateId = this.accountId?.id.toString(),
+    version = this.version,
+    timestamp = Instant.now(),
+    data = serializer.serializeToBytes(this)
 )

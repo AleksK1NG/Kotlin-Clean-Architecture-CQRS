@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.BalanceDepositedEvent.Companion.ACCOUNT_BALANCE_DEPOSITED_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Balance
@@ -36,4 +37,13 @@ fun BalanceDepositedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEv
     data = data,
     version = this.version,
     timestamp = Instant.now(),
+)
+
+fun BalanceDepositedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
+    eventId = UUID.randomUUID(),
+    eventType = ACCOUNT_BALANCE_DEPOSITED_V1,
+    aggregateId = this.accountId?.id.toString(),
+    version = this.version,
+    timestamp = Instant.now(),
+    data = serializer.serializeToBytes(this)
 )

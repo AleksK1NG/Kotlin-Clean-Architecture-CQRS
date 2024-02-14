@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 @RestController
@@ -35,36 +36,37 @@ class AccountController(
 
     @PutMapping(path = ["/deposit/{id}"])
     suspend fun depositBalance(@PathVariable id: UUID, @RequestBody request: DepositBalanceRequest) = controllerScope {
-        log.info { "POST create account request: $request" }
         val account = accountCommandService.handle(request.toCommand(AccountId(id)))
         ResponseEntity.ok(account)
     }
 
     @PutMapping(path = ["/withdraw/{id}"])
-    suspend fun withdrawBalance(@PathVariable id: UUID, @RequestBody request: WithdrawBalanceRequest) =
-        controllerScope {
-            log.info { "POST create account request: $request" }
-            val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-            ResponseEntity.ok(account)
-        }
+    suspend fun withdrawBalance(
+        @PathVariable id: UUID,
+        @RequestBody request: WithdrawBalanceRequest
+    ) = controllerScope {
+        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+        ResponseEntity.ok(account)
+    }
 
     @PutMapping(path = ["/status/{id}"])
-    suspend fun updateStatus(@PathVariable id: UUID, @RequestBody request: ChangeAccountStatusRequest) =
-        controllerScope {
-            log.info { "POST create account request: $request" }
-            val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-            ResponseEntity.ok(account)
-        }
-
-
-    private companion object {
-        private val log = KotlinLogging.logger { }
+    suspend fun updateStatus(
+        @PathVariable id: UUID,
+        @RequestBody request: ChangeAccountStatusRequest
+    ) = controllerScope {
+        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
+        ResponseEntity.ok(account)
     }
+
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 
     private suspend fun <T> controllerScope(
-        context: CoroutineContext? = null,
+        context: CoroutineContext = EmptyCoroutineContext,
         block: suspend (CoroutineScope) -> T
-    ): T = if (context != null) block(scope + context) else block(scope)
+    ): T = block(scope + context)
+
+    private companion object {
+        private val log = KotlinLogging.logger { }
+    }
 }

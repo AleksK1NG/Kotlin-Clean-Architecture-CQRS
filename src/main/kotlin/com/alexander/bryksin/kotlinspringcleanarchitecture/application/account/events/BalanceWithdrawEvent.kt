@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.BalanceWithdrawEvent.Companion.ACCOUNT_BALANCE_WITHDRAW_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Balance
@@ -36,4 +37,13 @@ fun BalanceWithdrawEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEve
     data = data,
     version = this.version,
     timestamp = Instant.now(),
+)
+
+fun BalanceWithdrawEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
+    eventId = UUID.randomUUID(),
+    eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
+    aggregateId = this.accountId?.id.toString(),
+    version = this.version,
+    timestamp = Instant.now(),
+    data = serializer.serializeToBytes(this)
 )
