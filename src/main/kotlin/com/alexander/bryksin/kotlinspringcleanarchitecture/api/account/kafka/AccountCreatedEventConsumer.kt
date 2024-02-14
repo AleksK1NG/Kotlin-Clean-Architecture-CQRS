@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class AccountCreatedEventConsumer(
-    private val eventConsumer: EventConsumer,
+    private val eventProcessor: EventProcessor,
     private val accountEventsHandler: AccountEventsHandler,
 ) {
 
@@ -20,7 +20,23 @@ class AccountCreatedEventConsumer(
         groupId = "\${kafka.consumer-group-id:account_microservice_group_id}",
         topics = ["\${topics.accountCreated.name}"],
     )
-    fun process(ack: Acknowledgment, record: ConsumerRecord<String, ByteArray>) = eventConsumer.runProcess(
+    fun process(ack: Acknowledgment, record: ConsumerRecord<String, ByteArray>) = eventProcessor.runProcess(
+        ack = ack,
+        consumerRecord = record,
+        deserializationClazz = AccountCreatedEvent::class.java,
+        unprocessableExceptions = unprocessableExceptions,
+        onError = {}
+    ) { event ->
+        accountEventsHandler.on(event)
+        ack.acknowledge()
+        log.info { "consumerRecord successfully processed: $record" }
+    }
+
+    @KafkaListener(
+        groupId = "\${kafka.consumer-group-id:account_microservice_group_id}",
+        topics = ["\${topics.accountCreatedRetry.name}"],
+    )
+    fun processRetry(ack: Acknowledgment, record: ConsumerRecord<String, ByteArray>) = eventProcessor.runProcess(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,

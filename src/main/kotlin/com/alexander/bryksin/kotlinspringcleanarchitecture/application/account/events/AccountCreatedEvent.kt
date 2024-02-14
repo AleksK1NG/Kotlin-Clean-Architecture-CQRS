@@ -44,6 +44,7 @@ fun AccountCreatedEvent.toOutboxEvent(data: ByteArray) = OutboxEvent(
     timestamp = Instant.now(),
     data = data
 )
+
 fun AccountCreatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_CREATED_EVENT_V1,
@@ -51,4 +52,14 @@ fun AccountCreatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     version = this.version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)
+)
+
+fun AccountCreatedEvent.toAccount() = Account(
+    accountId = accountId,
+    contactInfo = contactInfo,
+    personalInfo = personalInfo,
+    address = address,
+    version = version,
+    updatedAt = updatedAt,
+    createdAt = createdAt,
 )
