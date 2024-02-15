@@ -1,6 +1,8 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.deserializeRecordToEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventsHandler
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
@@ -34,19 +36,24 @@ class EventProcessor(
             onSuccess(event)
         } catch (e: Exception) {
             log.error { "error while processing event: ${e.message}" }
+
             if (unprocessableExceptions.contains(e::class.java) || dlqExceptions.contains(e::class.java)) {
                 log.warn { "publishing to DLQ: ${e.message}" }
                 // publish to dlq
                 ack.acknowledge()
                 return@runBlocking
             }
+
             onError(e)
         }
     }
 
-
     private companion object {
         private val log = KotlinLogging.logger { }
-        private val dlqExceptions = setOf(SerializationException::class.java)
+        private val dlqExceptions = setOf(
+            SerializationException::class.java,
+            LowerEventVersionException::eventVersion,
+            SameEventVersionException::class.java
+        )
     }
 }
