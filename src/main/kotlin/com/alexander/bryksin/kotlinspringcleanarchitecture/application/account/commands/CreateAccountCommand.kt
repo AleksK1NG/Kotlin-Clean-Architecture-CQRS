@@ -22,5 +22,6 @@ fun CreateAccountCommand.toAccount() = Account(
     address = address,
     personalInfo = personalInfo,
     updatedAt = Instant.now(),
-    createdAt = Instant.now()
+    createdAt = Instant.now(),
+    version = 1
 )

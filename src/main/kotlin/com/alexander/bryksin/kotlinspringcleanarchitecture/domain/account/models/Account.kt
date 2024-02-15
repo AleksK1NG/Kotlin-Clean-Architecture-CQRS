@@ -19,22 +19,23 @@ data class Account(
 
 
     fun depositBalance(amount: Long): Account {
-        val newBalance = this.balance.copy(amount = (this.balance.amount + amount))
-        return this.copy(balance = newBalance)
+        val newBalance = balance.copy(amount = (this.balance.amount + amount))
+        return copy(balance = newBalance, updatedAt = Instant.now())
     }
 
     fun withdrawBalance(amount: Long): Account {
-        if ((this.balance.amount - amount) < 0) throw InvalidAmountException(accountId?.string() ?: "", amount)
-        val newBalance = this.balance.copy(amount = (this.balance.amount - amount))
-        return this.copy(balance = newBalance)
+        if ((balance.amount - amount) < 0) throw InvalidAmountException(accountId?.string() ?: "", amount)
+        val newBalance = balance.copy(amount = (balance.amount - amount))
+        return copy(balance = newBalance, updatedAt = Instant.now())
     }
 
+    fun updateStatus(newStatus: AccountStatus) = copy(status = newStatus)
 
-    fun changeContactInfo(contactInfo: ContactInfo): Account = this.copy(contactInfo = contactInfo)
+    fun changeContactInfo(contactInfo: ContactInfo): Account = copy(contactInfo = contactInfo, updatedAt = Instant.now())
 
-    fun changeAddress(address: Address): Account = this.copy(address = address)
+    fun changeAddress(address: Address): Account = copy(address = address, updatedAt = Instant.now())
 
-    fun changePersonalInfo(personalInfo: PersonalInfo): Account = this.copy(personalInfo = personalInfo)
+    fun changePersonalInfo(personalInfo: PersonalInfo): Account = copy(personalInfo = personalInfo, updatedAt = Instant.now())
 
     companion object {}
 }

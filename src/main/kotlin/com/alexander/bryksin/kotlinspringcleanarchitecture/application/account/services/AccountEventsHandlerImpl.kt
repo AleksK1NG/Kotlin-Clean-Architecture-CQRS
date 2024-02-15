@@ -1,7 +1,9 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.InvalidEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.UpperEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountMongoRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
@@ -19,48 +21,39 @@ class AccountEventsHandlerImpl(
 ) : AccountEventsHandler {
 
     override suspend fun on(event: AccountCreatedEvent): Unit = serviceScope {
-        log.info { "AccountEventsHandlerImpl Account created event: $event" }
         accountMongoRepository.createAccount(event.toAccount())
     }
 
     override suspend fun on(event: BalanceDepositedEvent): Unit = serviceScope {
-        val foundAccount = findAndValidateVersion(event.accountId!!, event.version)
-
-        val accountToUpdate = foundAccount.copy(balance = event.balance, updatedAt = foundAccount.updatedAt)
-        val updatedAccount = accountMongoRepository.updateAccount(accountToUpdate)
-        log.info { "AccountEventsHandlerImpl BalanceDepositedEvent updatedAccount: $updatedAccount" }
+        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+            foundAccount.depositBalance(event.balance.amount)
+        }
     }
 
 
-    override suspend fun on(event: BalanceWithdrawEvent) = serviceScope {
-        val foundAccount = findAndValidateVersion(event.accountId!!, event.version)
-        val accountToUpdate = foundAccount.copy(balance = event.balance, updatedAt = foundAccount.updatedAt)
-
-        val updatedAccount = accountMongoRepository.updateAccount(accountToUpdate)
-        log.info { "AccountEventsHandlerImpl BalanceWithdrawEvent updatedAccount: $updatedAccount" }
+    override suspend fun on(event: BalanceWithdrawEvent): Unit = serviceScope {
+        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+            foundAccount.withdrawBalance(event.balance.amount)
+        }
     }
 
-    override suspend fun on(event: PersonalInfoUpdatedEvent) = serviceScope {
-        val foundAccount = findAndValidateVersion(event.accountId!!, event.version)
-        val accountToUpdate = foundAccount.copy(personalInfo = event.personalInfo, updatedAt = foundAccount.updatedAt)
-
-        val updatedAccount = accountMongoRepository.updateAccount(accountToUpdate)
-        log.info { "AccountEventsHandlerImpl PersonalInfoUpdatedEvent updatedAccount: $updatedAccount" }
+    override suspend fun on(event: PersonalInfoUpdatedEvent): Unit = serviceScope {
+        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+            foundAccount.changePersonalInfo(event.personalInfo)
+        }
     }
 
 
-    override suspend fun on(event: ContactInfoChangedEvent) = serviceScope {
-        val foundAccount = findAndValidateVersion(event.accountId!!, event.version)
-        val accountToUpdate = foundAccount.copy(contactInfo = event.contactInfo, updatedAt = foundAccount.updatedAt)
-
-        val updatedAccount = accountMongoRepository.updateAccount(accountToUpdate)
-        log.info { "AccountEventsHandlerImpl PersonalInfoUpdatedEvent updatedAccount: $updatedAccount" }
+    override suspend fun on(event: ContactInfoChangedEvent): Unit = serviceScope {
+        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+            foundAccount.changeContactInfo(event.contactInfo)
+        }
     }
 
     override suspend fun on(event: AccountStatusChangedEvent): Unit = serviceScope {
         findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
-            foundAccount.copy(status = event.status, updatedAt = foundAccount.updatedAt)
-        }.also { log.info { "AccountEventsHandlerImpl AccountStatusChangedEvent updatedAccount: $it" } }
+            foundAccount.updateStatus(event.status)
+        }
     }
 
     private suspend fun findAndUpdateAccountById(
@@ -71,11 +64,20 @@ class AccountEventsHandlerImpl(
         val foundAccount = findAndValidateVersion(accountId, eventVersion)
         val accountToUpdate = block(foundAccount)
         return accountMongoRepository.updateAccount(accountToUpdate)
+            .also { log.info { "mongo repository updated account: $it" } }
     }
 
     private fun validateVersion(account: Account, eventVersion: Long) {
-        log.warn { "invalid version: eventVersion: $eventVersion, accountVersion: ${account.version}" }
-        throw InvalidEventVersionException(account.accountId, account.version, eventVersion)
+        when {
+            eventVersion < account.version + 1 ->
+                throw LowerEventVersionException(account.accountId, account.version, eventVersion)
+
+            eventVersion == account.version + 1 ->
+                throw SameEventVersionException(account.accountId, account.version, eventVersion)
+
+            eventVersion > account.version + 1 ->
+                throw UpperEventVersionException(account.accountId, account.version, eventVersion)
+        }
     }
 
     private suspend fun findAndValidateVersion(accountId: AccountId, eventVersion: Long): Account {

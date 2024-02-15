@@ -52,7 +52,7 @@ fun AccountDocument.toAccount(): Account = Account(
 
 fun Account.toBsonUpdate() = Updates.combine(
     Updates.set("contactInfo.email", contactInfo.email),
-    Updates.set("contactInfo.email", contactInfo.phone),
+    Updates.set("contactInfo.phone", contactInfo.phone),
     Updates.set("personalInfo.bio", personalInfo.bio),
     Updates.set("personalInfo.imageUrl", personalInfo.imageUrl),
     Updates.set("address.city", address.city),
@@ -60,5 +60,7 @@ fun Account.toBsonUpdate() = Updates.combine(
     Updates.set("address.postCode", address.postCode),
     Updates.set("address.status", status),
     Updates.set("version", version),
+    Updates.set("balance.amount", balance.amount),
+    Updates.set("balance.balanceCurrency", balance.balanceCurrency),
     Updates.set("updatedAt", updatedAt),
 )

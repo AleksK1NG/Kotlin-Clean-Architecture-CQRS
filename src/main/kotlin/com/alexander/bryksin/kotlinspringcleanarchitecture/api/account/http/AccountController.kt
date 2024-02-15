@@ -34,31 +34,49 @@ class AccountController(
             .let { ResponseEntity.status(HttpStatus.OK).body(it) }
     }
 
-    @PutMapping(path = ["/deposit/{id}"])
+    @PutMapping(path = ["/{id}/deposit"])
     suspend fun depositBalance(
         @PathVariable id: UUID,
         @RequestBody request: DepositBalanceRequest
     ) = controllerScope {
-        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-        ResponseEntity.ok(account)
+        accountCommandService.handle(request.toCommand(AccountId(id)))
+            .let { ResponseEntity.ok(it) }
     }
 
-    @PutMapping(path = ["/withdraw/{id}"])
+    @PutMapping(path = ["/{id}/withdraw"])
     suspend fun withdrawBalance(
         @PathVariable id: UUID,
         @RequestBody request: WithdrawBalanceRequest
     ) = controllerScope {
-        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-        ResponseEntity.ok(account)
+        accountCommandService.handle(request.toCommand(AccountId(id)))
+            .let { ResponseEntity.ok(it) }
     }
 
-    @PutMapping(path = ["/status/{id}"])
+    @PutMapping(path = ["/{id}/status"])
     suspend fun updateStatus(
         @PathVariable id: UUID,
         @RequestBody request: ChangeAccountStatusRequest
     ) = controllerScope {
-        val account = accountCommandService.handle(request.toCommand(AccountId(id)))
-        ResponseEntity.ok(account)
+        accountCommandService.handle(request.toCommand(AccountId(id)))
+            .let { ResponseEntity.ok(it) }
+    }
+
+    @PutMapping(path = ["/{id}/info/"])
+    suspend fun updatePersonalInfo(
+        @PathVariable id: UUID,
+        @RequestBody request: UpdatePersonalInfoRequest
+    ) = controllerScope {
+        accountCommandService.handle(request.toCommand(AccountId(id)))
+            .let { ResponseEntity.ok(it) }
+    }
+
+    @PutMapping(path = ["/{id}/contacts/"])
+    suspend fun changeContactInfo(
+        @PathVariable id: UUID,
+        @RequestBody request: ChangeAccountStatusRequest
+    ) = controllerScope {
+        accountCommandService.handle(request.toCommand(AccountId(id)))
+            .let { ResponseEntity.ok(it) }
     }
 
 
