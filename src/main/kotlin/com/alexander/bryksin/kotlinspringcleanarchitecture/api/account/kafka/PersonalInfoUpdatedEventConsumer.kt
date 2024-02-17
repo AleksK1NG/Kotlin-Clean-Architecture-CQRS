@@ -23,7 +23,6 @@ class PersonalInfoUpdatedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
-        onError = {}
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()

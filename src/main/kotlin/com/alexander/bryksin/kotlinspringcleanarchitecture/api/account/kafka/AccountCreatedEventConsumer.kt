@@ -25,11 +25,16 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = {}
+        onError = errorHandler
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()
         log.info { "consumerRecord successfully processed: $record" }
+    }
+
+    private val errorHandler: ErrorHandler = { err, ack, consumerRecord ->
+        log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }
+        ack.acknowledge()
     }
 
     @KafkaListener(
@@ -41,7 +46,6 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = {}
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()

@@ -37,10 +37,9 @@ class AccountCommandServiceImpl(
         validateAndVerifyEmail(command.contactInfo.email)
 
         val (account, event) = tx.executeAndAwait {
-            val savedAccount = accountRepository.saveAccount(command.toAccount())
-            val accountCreatedEvent = AccountCreatedEvent.of(account = savedAccount).toOutboxEvent(serializer)
-            val outboxEvent = outboxRepository.insert(accountCreatedEvent)
-            Pair(savedAccount, outboxEvent)
+            val account = accountRepository.saveAccount(command.toAccount())
+            val event = outboxRepository.insert(account.toAccountCreatedEvent().toOutboxEvent(serializer))
+            account to event
         }
 
         publisherScope.launch { publishOutboxEvent(event) }
@@ -50,13 +49,10 @@ class AccountCommandServiceImpl(
 
     override suspend fun handle(command: ChangeAccountStatusCommand): Account = serviceScope {
         val (account, event) = tx.executeAndAwait {
-            val account = getAccountById(command.accountId)
-
-            val updatedAccount = accountRepository.updateAccount(account.copy(status = command.status))
-            val outboxEvent = outboxRepository.insert(
-                updatedAccount.toStatusChangedEvent().toOutboxEvent(serializer)
-            )
-            Pair(updatedAccount, outboxEvent)
+            val foundAccount = getAccountById(command.accountId)
+            val account = accountRepository.updateAccount(foundAccount.updateStatus(command.status))
+            val event = outboxRepository.insert(account.toStatusChangedEvent().toOutboxEvent(serializer))
+            account to event
         }
 
         publisherScope.launch { publishOutboxEvent(event) }
@@ -65,13 +61,10 @@ class AccountCommandServiceImpl(
 
     override suspend fun handle(command: ChangeContactInfoCommand): Account = serviceScope {
         val (account, event) = tx.executeAndAwait {
-            val account = getAccountById(command.accountId)
-
-            val updatedAccount = accountRepository.updateAccount(account.copy(contactInfo = command.contactInfo))
-            val outboxEvent = outboxRepository.insert(
-                updatedAccount.toContactInfoChangedEvent().toOutboxEvent(serializer)
-            )
-            Pair(updatedAccount, outboxEvent)
+            val foundAccount = getAccountById(command.accountId)
+            val account = accountRepository.updateAccount(foundAccount.changeContactInfo(command.contactInfo))
+            val event = outboxRepository.insert(account.toContactInfoChangedEvent().toOutboxEvent(serializer))
+            account to event
         }
 
         publisherScope.launch { publishOutboxEvent(event) }
@@ -82,13 +75,10 @@ class AccountCommandServiceImpl(
         validateTransaction(command.accountId, command.transactionId)
 
         val (account, event) = tx.executeAndAwait {
-            val account = getAccountById(command.accountId)
-
-            val updatedAccount = accountRepository.updateAccount(account.depositBalance(command.balance.amount))
-            val outboxEvent = outboxRepository.insert(
-                updatedAccount.toBalanceDepositedEvent().toOutboxEvent(serializer)
-            )
-            Pair(updatedAccount, outboxEvent)
+            val foundAccount = getAccountById(command.accountId)
+            val account = accountRepository.updateAccount(foundAccount.depositBalance(command.balance.amount))
+            val event = outboxRepository.insert(account.toBalanceDepositedEvent().toOutboxEvent(serializer))
+            account to event
         }
 
         publisherScope.launch { publishOutboxEvent(event) }
@@ -99,13 +89,10 @@ class AccountCommandServiceImpl(
         validateTransaction(command.accountId, command.transactionId)
 
         val (account, event) = tx.executeAndAwait {
-            val account = getAccountById(command.accountId)
-
-            val updatedAccount = accountRepository.updateAccount(account.withdrawBalance(command.balance.amount))
-            val outboxEvent = outboxRepository.insert(
-                updatedAccount.toBalanceWithdrawEvent().toOutboxEvent(serializer)
-            )
-            Pair(updatedAccount, outboxEvent)
+            val foundAccount = getAccountById(command.accountId)
+            val account = accountRepository.updateAccount(foundAccount.withdrawBalance(command.balance.amount))
+            val event = outboxRepository.insert(account.toBalanceWithdrawEvent().toOutboxEvent(serializer))
+            account to event
         }
 
         publisherScope.launch { publishOutboxEvent(event) }
@@ -114,14 +101,10 @@ class AccountCommandServiceImpl(
 
     override suspend fun handle(command: UpdatePersonalInfoCommand): Account = serviceScope {
         val (account, event) = tx.executeAndAwait {
-            val account = getAccountById(command.accountId)
-            account.changePersonalInfo(command.personalInfo)
-
-            val updatedAccount = accountRepository.updateAccount(account.changePersonalInfo(command.personalInfo))
-            val outboxEvent = outboxRepository.insert(
-                updatedAccount.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer)
-            )
-            Pair(updatedAccount, outboxEvent)
+            val foundAccount = getAccountById(command.accountId)
+            val account = accountRepository.updateAccount(foundAccount.changePersonalInfo(command.personalInfo))
+            val event = outboxRepository.insert(account.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer))
+            account to event
         }
 
         publisherScope.launch { publishOutboxEvent(event) }

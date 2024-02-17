@@ -12,7 +12,7 @@ import java.time.Instant
 import java.util.*
 
 data class AccountCreatedEvent(
-    val accountId: AccountId?,
+    val accountId: AccountId,
     val contactInfo: ContactInfo = ContactInfo(),
     val personalInfo: PersonalInfo = PersonalInfo(),
     val address: Address = Address(),
@@ -27,7 +27,7 @@ data class AccountCreatedEvent(
 
 
 fun AccountCreatedEvent.Companion.of(account: Account) = AccountCreatedEvent(
-    accountId = account.accountId,
+    accountId = account.accountId ?: AccountId(UUID.randomUUID()),
     contactInfo = account.contactInfo,
     personalInfo = account.personalInfo,
     address = account.address,
@@ -63,3 +63,17 @@ fun AccountCreatedEvent.toAccount() = Account(
     updatedAt = updatedAt,
     createdAt = createdAt,
 )
+
+fun Account.toAccountCreatedEvent(): AccountCreatedEvent {
+    requireNotNull(accountId) { "accountId must be provided" }
+
+    return AccountCreatedEvent(
+        accountId = accountId,
+        contactInfo = contactInfo,
+        personalInfo = personalInfo,
+        address = address,
+        version = version,
+        updatedAt = updatedAt,
+        createdAt = createdAt,
+    )
+}

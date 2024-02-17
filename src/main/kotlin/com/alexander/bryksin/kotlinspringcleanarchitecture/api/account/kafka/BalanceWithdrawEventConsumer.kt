@@ -23,7 +23,6 @@ class BalanceWithdrawEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceWithdrawEvent::class.java,
-        onError = {}
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()

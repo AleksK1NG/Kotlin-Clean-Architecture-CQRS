@@ -23,7 +23,6 @@ class BalanceDepositedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceDepositedEvent::class.java,
-        onError = {}
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()

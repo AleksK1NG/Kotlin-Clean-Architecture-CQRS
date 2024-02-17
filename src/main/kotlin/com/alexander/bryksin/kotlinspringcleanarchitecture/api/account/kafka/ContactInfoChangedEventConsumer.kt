@@ -23,7 +23,6 @@ class ContactInfoChangedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = ContactInfoChangedEvent::class.java,
-        onError = {}
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()

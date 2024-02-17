@@ -6,6 +6,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.s
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.validation.Valid
 import kotlinx.coroutines.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -23,7 +24,7 @@ class AccountController(
 ) {
 
     @PostMapping
-    suspend fun createAccount(@RequestBody request: CreateAccountRequest) = controllerScope {
+    suspend fun createAccount(@Valid @RequestBody request: CreateAccountRequest) = controllerScope {
         accountCommandService.handle(request.toCommand())
             .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
     }
@@ -37,7 +38,7 @@ class AccountController(
     @PutMapping(path = ["/{id}/deposit"])
     suspend fun depositBalance(
         @PathVariable id: UUID,
-        @RequestBody request: DepositBalanceRequest
+        @Valid @RequestBody request: DepositBalanceRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
             .let { ResponseEntity.ok(it) }
@@ -46,7 +47,7 @@ class AccountController(
     @PutMapping(path = ["/{id}/withdraw"])
     suspend fun withdrawBalance(
         @PathVariable id: UUID,
-        @RequestBody request: WithdrawBalanceRequest
+        @Valid @RequestBody request: WithdrawBalanceRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
             .let { ResponseEntity.ok(it) }
@@ -55,7 +56,7 @@ class AccountController(
     @PutMapping(path = ["/{id}/status"])
     suspend fun updateStatus(
         @PathVariable id: UUID,
-        @RequestBody request: ChangeAccountStatusRequest
+        @Valid @RequestBody request: ChangeAccountStatusRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
             .let { ResponseEntity.ok(it) }
@@ -64,7 +65,7 @@ class AccountController(
     @PutMapping(path = ["/{id}/info/"])
     suspend fun updatePersonalInfo(
         @PathVariable id: UUID,
-        @RequestBody request: UpdatePersonalInfoRequest
+        @Valid @RequestBody request: UpdatePersonalInfoRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
             .let { ResponseEntity.ok(it) }
@@ -73,7 +74,7 @@ class AccountController(
     @PutMapping(path = ["/{id}/contacts/"])
     suspend fun changeContactInfo(
         @PathVariable id: UUID,
-        @RequestBody request: ChangeAccountStatusRequest
+        @Valid @RequestBody request: ChangeAccountStatusRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
             .let { ResponseEntity.ok(it) }

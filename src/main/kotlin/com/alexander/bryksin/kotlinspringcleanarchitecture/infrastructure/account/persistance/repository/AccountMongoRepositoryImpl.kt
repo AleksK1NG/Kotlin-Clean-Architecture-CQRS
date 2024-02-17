@@ -24,27 +24,21 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @Component
 class AccountMongoRepositoryImpl(
-    private val mongoClient: MongoClient,
+    mongoClient: MongoClient,
 ) : AccountMongoRepository {
 
-    private val accountsDB = mongoClient.getDatabase("accounts")
-    private val accountsCollection = accountsDB.getCollection<AccountDocument>("accounts")
+    private val accountsDB = mongoClient.getDatabase(ACCOUNTS_DB)
+    private val accountsCollection = accountsDB.getCollection<AccountDocument>(ACCOUNTS_COLLECTION)
 
     override suspend fun createAccount(account: Account): Account = repositoryScope {
-        val insertOneResult = try {
-            accountsCollection.insertOne(account.toDocument())
-        } catch (e: Exception) {
-            log.error { "error inserting account ${e.message}" }
-            throw e
-        }
-        // save account to mongo
-        log.info { "AccountProjectionRepositoryImpl account insertOneResult: $insertOneResult, account: $account" }
-
+        val insertOneResult = accountsCollection.insertOne(account.toDocument())
+        log.info { "account insertOneResult: $insertOneResult, account: $account" }
         account
     }
 
     override suspend fun updateAccount(account: Account): Account = repositoryScope {
-        val accountDocument = accountsCollection.find(eq("accountId", account.accountId?.string())).firstOrNull()
+        val accountDocument = accountsCollection.find(eq(ACCOUNT_ID, account.accountId?.string()))
+            .firstOrNull()
             ?: throw AccountNotFoundException(account.accountId?.string())
 
         val updatedAccount = accountDocument.toAccount().copy(
@@ -57,28 +51,22 @@ class AccountMongoRepositoryImpl(
             updatedAt = Instant.now(),
         )
 
-
-        val filter = and(eq("accountId", account.accountId?.string()), eq("version", account.version))
+        val filter = and(eq(ACCOUNT_ID, account.accountId?.string()), eq(VERSION, account.version))
         val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
 
-        val updatedDocument = accountsCollection.findOneAndUpdate(
+        accountsCollection.findOneAndUpdate(
             filter,
             updatedAccount.toBsonUpdate(),
             options
-        ) ?: throw AccountNotFoundException(account.accountId?.string())
-
-        updatedDocument.toAccount()
+        )
+            ?.toAccount()
+            ?: throw AccountNotFoundException(account.accountId?.string())
     }
 
     override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {
-        try {
-            val document = accountsCollection.find<AccountDocument>(eq("accountId", id.string())).firstOrNull()
-            log.info { "AccountProjectionRepositoryImpl getAccountByIdDocument: $document" }
-            document?.toAccount()
-        } catch (e: Exception) {
-            log.error { "error getAccountById ${e.message}" }
-            throw e
-        }
+        accountsCollection.find<AccountDocument>(eq(ACCOUNT_ID, id.string()))
+            .firstOrNull()
+            ?.toAccount()
     }
 
 
@@ -91,5 +79,10 @@ class AccountMongoRepositoryImpl(
 
     private companion object {
         private val log = KotlinLogging.logger { }
+
+        private const val ACCOUNTS_DB = "accounts"
+        private const val ACCOUNTS_COLLECTION = "accounts"
+        private const val ACCOUNT_ID = "accountId"
+        private const val VERSION = "version"
     }
 }

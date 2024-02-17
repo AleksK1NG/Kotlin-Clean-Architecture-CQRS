@@ -14,6 +14,9 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Component
 
+
+typealias ErrorHandler = (Throwable, Acknowledgment, ConsumerRecord<String, ByteArray>) -> Unit
+
 @Component
 class EventProcessor(
     private val serializer: Serializer,
@@ -27,7 +30,7 @@ class EventProcessor(
         consumerRecord: ConsumerRecord<String, ByteArray>,
         deserializationClazz: Class<T>,
         unprocessableExceptions: Set<Class<*>> = setOf(),
-        onError: (Throwable) -> Unit,
+        onError: ErrorHandler = { err, _, _ -> log.error { err.message } },
         onSuccess: suspend (T) -> Unit
     ) = runBlocking {
         try {
@@ -44,7 +47,7 @@ class EventProcessor(
                 return@runBlocking
             }
 
-            onError(e)
+            onError(e, ack, consumerRecord)
         }
     }
 

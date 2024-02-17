@@ -24,7 +24,6 @@ class AccountStatusChangedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = AccountStatusChangedEvent::class.java,
-        onError = {}
     ) { event ->
         accountEventsHandler.on(event)
         ack.acknowledge()
