@@ -2,6 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.AccountNotFoundException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.InvalidTransactionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
@@ -18,7 +19,6 @@ import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
-import javax.security.auth.login.AccountNotFoundException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -120,7 +120,6 @@ class AccountCommandServiceImpl(
         }
     }
 
-
     private suspend fun validateTransaction(accountId: AccountId, transactionId: String) {
         if (!paymentClient.verifyPaymentTransaction(
                 accountId = accountId.string(),
@@ -134,7 +133,7 @@ class AccountCommandServiceImpl(
     }
 
     private suspend fun getAccountById(accountId: AccountId): Account =
-        accountRepository.getAccountById(accountId) ?: throw AccountNotFoundException(accountId.string())
+        accountRepository.getAccountById(accountId) ?: throw AccountNotFoundException(accountId)
 
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
@@ -145,9 +144,10 @@ class AccountCommandServiceImpl(
         block: suspend (CoroutineScope) -> T
     ): T = block(scope + context)
 
-
     private companion object {
         private val log = KotlinLogging.logger { }
+
+
     }
 }
 

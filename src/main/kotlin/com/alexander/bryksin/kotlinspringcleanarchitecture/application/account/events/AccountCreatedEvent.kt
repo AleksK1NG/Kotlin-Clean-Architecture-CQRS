@@ -26,20 +26,10 @@ data class AccountCreatedEvent(
 }
 
 
-fun AccountCreatedEvent.Companion.of(account: Account) = AccountCreatedEvent(
-    accountId = account.accountId ?: AccountId(UUID.randomUUID()),
-    contactInfo = account.contactInfo,
-    personalInfo = account.personalInfo,
-    address = account.address,
-    version = account.version,
-    updatedAt = account.updatedAt,
-    createdAt = account.createdAt,
-)
-
 fun AccountCreatedEvent.toOutboxEvent(data: ByteArray) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_CREATED_EVENT_V1,
-    aggregateId = accountId?.id.toString(),
+    aggregateId = accountId.id.toString(),
     version = version,
     timestamp = Instant.now(),
     data = data
@@ -48,7 +38,7 @@ fun AccountCreatedEvent.toOutboxEvent(data: ByteArray) = OutboxEvent(
 fun AccountCreatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_CREATED_EVENT_V1,
-    aggregateId = accountId?.id.toString(),
+    aggregateId = accountId.id.toString(),
     version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)

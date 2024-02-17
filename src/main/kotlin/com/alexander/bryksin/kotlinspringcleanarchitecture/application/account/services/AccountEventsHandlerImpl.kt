@@ -2,7 +2,6 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.UpperEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountMongoRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
@@ -25,33 +24,33 @@ class AccountEventsHandlerImpl(
     }
 
     override suspend fun on(event: BalanceDepositedEvent): Unit = serviceScope {
-        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.depositBalance(event.balance.amount)
         }
     }
 
 
     override suspend fun on(event: BalanceWithdrawEvent): Unit = serviceScope {
-        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.withdrawBalance(event.balance.amount)
         }
     }
 
     override suspend fun on(event: PersonalInfoUpdatedEvent): Unit = serviceScope {
-        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.changePersonalInfo(event.personalInfo)
         }
     }
 
 
     override suspend fun on(event: ContactInfoChangedEvent): Unit = serviceScope {
-        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.changeContactInfo(event.contactInfo)
         }
     }
 
     override suspend fun on(event: AccountStatusChangedEvent): Unit = serviceScope {
-        findAndUpdateAccountById(event.accountId!!, event.version) { foundAccount ->
+        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.updateStatus(event.status)
         }
     }
@@ -61,10 +60,15 @@ class AccountEventsHandlerImpl(
         eventVersion: Long,
         block: suspend (Account) -> Account
     ): Account {
-        val foundAccount = findAndValidateVersion(accountId, eventVersion)
-        val accountToUpdate = block(foundAccount)
-        return accountMongoRepository.updateAccount(accountToUpdate)
-            .also { log.info { "mongo repository updated account: $it" } }
+        try {
+            val foundAccount = findAndValidateVersion(accountId, eventVersion)
+            val accountToUpdate = block(foundAccount)
+            return accountMongoRepository.updateAccount(accountToUpdate)
+                .also { log.info { "mongo repository updated account: $it" } }
+        } catch (e: Exception) {
+            log.error { e.message }
+            throw e
+        }
     }
 
     private fun validateVersion(account: Account, eventVersion: Long) {
@@ -72,8 +76,8 @@ class AccountEventsHandlerImpl(
             eventVersion < account.version + 1 ->
                 throw LowerEventVersionException(account.accountId, account.version, eventVersion)
 
-            eventVersion == account.version + 1 ->
-                throw SameEventVersionException(account.accountId, account.version, eventVersion)
+            eventVersion == account.version + 1 -> log.info { "valid version: ${account.version} - $eventVersion" }
+//                throw SameEventVersionException(account.accountId, account.version, eventVersion)
 
             eventVersion > account.version + 1 ->
                 throw UpperEventVersionException(account.accountId, account.version, eventVersion)

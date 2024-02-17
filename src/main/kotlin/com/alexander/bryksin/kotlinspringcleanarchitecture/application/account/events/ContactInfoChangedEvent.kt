@@ -10,7 +10,7 @@ import java.time.Instant
 import java.util.*
 
 data class ContactInfoChangedEvent(
-    val accountId: AccountId?,
+    val accountId: AccountId,
     val contactInfo: ContactInfo = ContactInfo(),
     val version: Long = 0,
     val updatedAt: Instant? = null,
@@ -22,13 +22,17 @@ data class ContactInfoChangedEvent(
 }
 
 
-fun Account.toContactInfoChangedEvent() = ContactInfoChangedEvent(
-    accountId = this.accountId,
-    contactInfo = this.contactInfo,
-    version = this.version,
-    updatedAt = this.updatedAt,
-    createdAt = this.createdAt,
-)
+fun Account.toContactInfoChangedEvent(): ContactInfoChangedEvent {
+    requireNotNull(accountId) { "accountId must be provided" }
+
+    return  ContactInfoChangedEvent(
+        accountId = this.accountId,
+        contactInfo = this.contactInfo,
+        version = this.version,
+        updatedAt = this.updatedAt,
+        createdAt = this.createdAt,
+    )
+}
 
 fun ContactInfoChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),

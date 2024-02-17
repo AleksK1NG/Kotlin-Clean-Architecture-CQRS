@@ -10,30 +10,34 @@ import java.time.Instant
 import java.util.*
 
 data class BalanceWithdrawEvent(
-    val accountId: AccountId?,
+    val accountId: AccountId,
     val balance: Balance,
     val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-): AccountEvent {
+) : AccountEvent {
     companion object {
         const val ACCOUNT_BALANCE_WITHDRAW_V1 = "ACCOUNT_BALANCE_WITHDRAW_V1"
     }
 }
 
 
-fun Account.toBalanceWithdrawEvent() = BalanceWithdrawEvent(
-    accountId = this.accountId,
-    balance = this.balance,
-    version = this.version,
-    updatedAt = this.updatedAt,
-    createdAt = this.createdAt,
-)
+fun Account.toBalanceWithdrawEvent(): BalanceWithdrawEvent {
+    requireNotNull(accountId) { "accountId must be provided" }
+
+    return BalanceWithdrawEvent(
+        accountId = this.accountId,
+        balance = this.balance,
+        version = this.version,
+        updatedAt = this.updatedAt,
+        createdAt = this.createdAt,
+    )
+}
 
 fun BalanceWithdrawEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = this.accountId.id.toString(),
     data = data,
     version = this.version,
     timestamp = Instant.now(),
@@ -42,7 +46,7 @@ fun BalanceWithdrawEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEve
 fun BalanceWithdrawEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = this.accountId.id.toString(),
     version = this.version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)

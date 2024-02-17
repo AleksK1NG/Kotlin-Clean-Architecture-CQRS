@@ -10,24 +10,28 @@ import java.time.Instant
 import java.util.*
 
 data class AccountStatusChangedEvent(
-    val accountId: AccountId?,
+    val accountId: AccountId,
     val status: AccountStatus = AccountStatus.FREE,
     val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-): AccountEvent {
+) : AccountEvent {
     companion object {
         const val ACCOUNT_STATUS_CHANGED_V1 = "ACCOUNT_STATUS_CHANGED_V1"
     }
 }
 
-fun Account.toStatusChangedEvent() = AccountStatusChangedEvent(
-    accountId = this.accountId,
-    status = this.status,
-    version = this.version,
-    updatedAt = this.updatedAt,
-    createdAt = this.createdAt,
-)
+fun Account.toStatusChangedEvent(): AccountStatusChangedEvent {
+    requireNotNull(accountId) { "accountId must be provided" }
+
+    return AccountStatusChangedEvent(
+        accountId = accountId,
+        status = status,
+        version = version,
+        updatedAt = updatedAt,
+        createdAt = createdAt,
+    )
+}
 
 fun AccountStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
@@ -41,7 +45,7 @@ fun AccountStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = Outb
 fun AccountStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_STATUS_CHANGED_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = this.accountId.id.toString(),
     version = this.version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)

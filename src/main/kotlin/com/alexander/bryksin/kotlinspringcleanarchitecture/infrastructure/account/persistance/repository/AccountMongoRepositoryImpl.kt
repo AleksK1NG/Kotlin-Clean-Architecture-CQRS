@@ -37,30 +37,37 @@ class AccountMongoRepositoryImpl(
     }
 
     override suspend fun updateAccount(account: Account): Account = repositoryScope {
-        val accountDocument = accountsCollection.find(eq(ACCOUNT_ID, account.accountId?.string()))
-            .firstOrNull()
-            ?: throw AccountNotFoundException(account.accountId?.string())
+//        val accountDocument = accountsCollection.find(eq(ACCOUNT_ID, account.accountId?.string()))
+//            .firstOrNull()
+//            ?: throw AccountNotFoundException(account.accountId?.string())
 
-        val updatedAccount = accountDocument.toAccount().copy(
-            contactInfo = account.contactInfo,
-            personalInfo = account.personalInfo,
-            address = account.address,
-            balance = account.balance,
-            status = account.status,
-            version = accountDocument.version + 1,
-            updatedAt = Instant.now(),
-        )
+//        val updatedAccount = accountDocument.toAccount().copy(
+//            contactInfo = account.contactInfo,
+//            personalInfo = account.personalInfo,
+//            address = account.address,
+//            balance = account.balance,
+//            status = account.status,
+//            version = accountDocument.version + 1,
+//            updatedAt = Instant.now(),
+//        )
 
-        val filter = and(eq(ACCOUNT_ID, account.accountId?.string()), eq(VERSION, account.version))
-        val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
+        try {
+            val filter = and(eq(ACCOUNT_ID, account.accountId?.string()), eq(VERSION, account.version))
+            val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
 
-        accountsCollection.findOneAndUpdate(
-            filter,
-            updatedAccount.toBsonUpdate(),
-            options
-        )
-            ?.toAccount()
-            ?: throw AccountNotFoundException(account.accountId?.string())
+            val res = accountsCollection.findOneAndUpdate(
+                filter,
+                account.copy(version = account.version + 1, updatedAt = Instant.now()).toBsonUpdate(),
+                options
+            )
+                ?.toAccount()
+                ?: throw AccountNotFoundException(account.accountId?.string())
+
+            res
+        } catch (e: Exception) {
+            log.error { e.message }
+            throw e
+        }
     }
 
     override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {

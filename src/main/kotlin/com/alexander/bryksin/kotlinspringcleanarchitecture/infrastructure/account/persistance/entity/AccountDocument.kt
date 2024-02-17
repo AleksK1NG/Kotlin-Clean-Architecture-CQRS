@@ -58,7 +58,7 @@ fun Account.toBsonUpdate() = Updates.combine(
     Updates.set("address.city", address.city),
     Updates.set("address.country", address.country),
     Updates.set("address.postCode", address.postCode),
-    Updates.set("address.status", status),
+    Updates.set("status", status),
     Updates.set("version", version),
     Updates.set("balance.amount", balance.amount),
     Updates.set("balance.balanceCurrency", balance.balanceCurrency),

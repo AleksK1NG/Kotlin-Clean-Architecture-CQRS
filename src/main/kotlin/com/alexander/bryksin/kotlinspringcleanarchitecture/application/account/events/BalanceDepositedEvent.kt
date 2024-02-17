@@ -10,25 +10,28 @@ import java.time.Instant
 import java.util.*
 
 data class BalanceDepositedEvent(
-    val accountId: AccountId?,
+    val accountId: AccountId,
     val balance: Balance,
     val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-): AccountEvent {
+) : AccountEvent {
     companion object {
         const val ACCOUNT_BALANCE_DEPOSITED_V1 = "ACCOUNT_BALANCE_DEPOSITED_V1"
     }
 }
 
 
-fun Account.toBalanceDepositedEvent() = BalanceDepositedEvent(
-    accountId = this.accountId,
-    balance = this.balance,
-    version = this.version,
-    updatedAt = this.updatedAt,
-    createdAt = this.createdAt,
-)
+fun Account.toBalanceDepositedEvent(): BalanceDepositedEvent {
+    requireNotNull(accountId) { "accountId must be provided" }
+    return BalanceDepositedEvent(
+        accountId = this.accountId,
+        balance = this.balance,
+        version = this.version,
+        updatedAt = this.updatedAt,
+        createdAt = this.createdAt,
+    )
+}
 
 fun BalanceDepositedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),

@@ -10,7 +10,7 @@ import java.time.Instant
 import java.util.*
 
 data class PersonalInfoUpdatedEvent(
-    val accountId: AccountId?,
+    val accountId: AccountId,
     val personalInfo: PersonalInfo = PersonalInfo(),
     val version: Long = 0,
     val updatedAt: Instant? = null,
@@ -21,13 +21,17 @@ data class PersonalInfoUpdatedEvent(
     }
 }
 
-fun Account.toPersonalInfoUpdatedEvent() = PersonalInfoUpdatedEvent(
-    accountId = this.accountId,
-    personalInfo = this.personalInfo,
-    version = this.version,
-    updatedAt = this.updatedAt,
-    createdAt = this.createdAt,
-)
+fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
+    requireNotNull(accountId) { "accountId must be provided" }
+
+    return PersonalInfoUpdatedEvent(
+        accountId = this.accountId,
+        personalInfo = this.personalInfo,
+        version = this.version,
+        updatedAt = this.updatedAt,
+        createdAt = this.createdAt,
+    )
+}
 
 fun PersonalInfoUpdatedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
