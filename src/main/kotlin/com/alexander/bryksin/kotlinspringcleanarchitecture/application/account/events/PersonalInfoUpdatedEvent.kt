@@ -22,10 +22,8 @@ data class PersonalInfoUpdatedEvent(
 }
 
 fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
-    requireNotNull(accountId) { "accountId must be provided" }
-
     return PersonalInfoUpdatedEvent(
-        accountId = this.accountId,
+        accountId = this.accountId!!,
         personalInfo = this.personalInfo,
         version = this.version,
         updatedAt = this.updatedAt,
@@ -36,7 +34,7 @@ fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
 fun PersonalInfoUpdatedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = this.accountId.id.toString(),
     data = data,
     version = this.version,
     timestamp = Instant.now(),

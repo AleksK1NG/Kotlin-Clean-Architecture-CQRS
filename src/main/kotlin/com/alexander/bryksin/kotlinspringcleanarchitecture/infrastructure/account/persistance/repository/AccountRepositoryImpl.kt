@@ -3,7 +3,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.accou
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.exceptions.OptimisticLockException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.exceptions.NoRowsUpdatedException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
@@ -22,33 +22,29 @@ class AccountRepositoryImpl(
 
     override suspend fun saveAccount(account: Account): Account = repositoryScope {
         dbClient.sql(INSERT_ACCOUNT_QUERY.trimMargin())
-            .bindValues(account.copy(version = 1).toPostgresEntityMap())
+            .bindValues(account.withVersion(1).toPostgresEntityMap())
             .fetch()
             .rowsUpdated()
             .awaitSingle()
-            .also { rowsUpdated -> log.info { "saved account rowsUpdated: $rowsUpdated, id: ${account.accountId?.id}" } }
-            .let { account }
+            .also { rowsUpdated -> log.info { "saved account rowsUpdated: $rowsUpdated, id: ${account.accountId}" } }
+
+        account
     }
 
 
     override suspend fun updateAccount(account: Account): Account = repositoryScope {
-        try {
-            val rowsUpdated = dbClient.sql(OPTIMISTIC_UPDATE_QUERY.trimMargin())
-                .bindValues(account.copy(updatedAt = Instant.now()).toPostgresEntityMap(withOptimisticLock = true))
-                .fetch()
-                .rowsUpdated()
-                .awaitSingle()
+        val rowsUpdated = dbClient.sql(OPTIMISTIC_UPDATE_QUERY.trimMargin())
+            .bindValues(account.withUpdatedAt(Instant.now()).toPostgresEntityMap(withOptimisticLock = true))
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
 
-            if (rowsUpdated == 0L) {
-                log.warn { "error optimistic lock while updating id: ${account.accountId?.id} version: ${account.version}" }
-                throw OptimisticLockException(account.accountId?.id, account.version)
-            }
-
-            account.copy(version = account.version + 1)
-        } catch (e: Exception) {
-            log.error { "${e.message} type: ${e::class.java}" }
-            throw e
+        if (rowsUpdated == 0L) {
+            log.warn { "error optimistic lock while updating id: ${account.accountId} version: ${account.version}" }
+            throw NoRowsUpdatedException(account.accountId, account.version)
         }
+
+        account.incVersion()
     }
 
     override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {
@@ -56,7 +52,7 @@ class AccountRepositoryImpl(
             .bind("id", id.id)
             .map { row, _ -> row.toAccount() }
             .awaitSingleOrNull()
-            .also { log.info { "get account by id result: $it" } }
+            .also { log.debug { "get account by id: $it" } }
     }
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)

@@ -11,7 +11,7 @@ data class OutboxEvent(
     val version: Long,
     val timestamp: Instant,
 ) {
-    companion object {}
+    companion object  {}
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -23,10 +23,8 @@ data class BalanceWithdrawEvent(
 
 
 fun Account.toBalanceWithdrawEvent(): BalanceWithdrawEvent {
-    requireNotNull(accountId) { "accountId must be provided" }
-
     return BalanceWithdrawEvent(
-        accountId = this.accountId,
+        accountId = this.accountId!!,
         balance = this.balance,
         version = this.version,
         updatedAt = this.updatedAt,

@@ -19,7 +19,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-typealias ErrorHandler = suspend (Throwable, Acknowledgment, ConsumerRecord<String, ByteArray>) -> Unit
+typealias ErrorHandler <T> = suspend (Throwable, Acknowledgment, ConsumerRecord<String, ByteArray>, Class<T>) -> Unit
 
 @Component
 class EventProcessor(
@@ -35,7 +35,7 @@ class EventProcessor(
         unprocessableExceptions: Set<Class<*>> = setOf(),
         retryTopic: String? = null,
         context: CoroutineContext = EmptyCoroutineContext,
-        onError: ErrorHandler = { err, _, _ -> log.error { err.message } },
+        onError: ErrorHandler<T> = { err, _, _, _ -> log.error { err.message } },
         onSuccess: suspend (T) -> Unit
     ) = runBlocking(processContext(context)) {
         try {
@@ -59,29 +59,36 @@ class EventProcessor(
                 return@runBlocking
             }
 
-            onError(e, ack, consumerRecord)
+            onError(e, ack, consumerRecord, deserializationClazz)
         }
     }
 
-    fun defaultErrorRetryHandler(retryTopic: String, maxRetryCount: Int = 3): ErrorHandler =
-        { err, ack, consumerRecord ->
+    fun <T> defaultErrorRetryHandler(
+        retryTopic: String,
+        maxRetryCount: Int = 3,
+    ): ErrorHandler<T> =
+        { err, ack, consumerRecord, clazz ->
             handleRetry(
                 err = err,
                 ack = ack,
                 consumerRecord = consumerRecord,
                 maxRetryCount = maxRetryCount,
-                retryTopic = retryTopic
+                retryTopic = retryTopic,
+                deserializationClazz = clazz
             )
         }
 
 
-    private suspend fun handleRetry(
+    private suspend fun <T> handleRetry(
         err: Throwable,
         ack: Acknowledgment,
         consumerRecord: ConsumerRecord<String, ByteArray>,
         maxRetryCount: Int,
         retryTopic: String,
+        deserializationClazz: Class<T>
     ) {
+        val event = serializer.deserializeRecordToEvent(consumerRecord, deserializationClazz)
+
         log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
 
         val retryCount = consumerRecord.getRetryCount()

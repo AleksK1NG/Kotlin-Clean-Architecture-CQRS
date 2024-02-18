@@ -23,9 +23,8 @@ data class BalanceDepositedEvent(
 
 
 fun Account.toBalanceDepositedEvent(): BalanceDepositedEvent {
-    requireNotNull(accountId) { "accountId must be provided" }
     return BalanceDepositedEvent(
-        accountId = this.accountId,
+        accountId = this.accountId!!,
         balance = this.balance,
         version = this.version,
         updatedAt = this.updatedAt,
@@ -36,7 +35,7 @@ fun Account.toBalanceDepositedEvent(): BalanceDepositedEvent {
 fun BalanceDepositedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_BALANCE_DEPOSITED_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = this.accountId.id.toString(),
     data = data,
     version = this.version,
     timestamp = Instant.now(),
@@ -45,8 +44,8 @@ fun BalanceDepositedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEv
 fun BalanceDepositedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_BALANCE_DEPOSITED_V1,
-    aggregateId = this.accountId?.id.toString(),
-    version = this.version,
+    aggregateId = accountId.id.toString(),
+    version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)
 )

@@ -22,10 +22,8 @@ data class AccountStatusChangedEvent(
 }
 
 fun Account.toStatusChangedEvent(): AccountStatusChangedEvent {
-    requireNotNull(accountId) { "accountId must be provided" }
-
     return AccountStatusChangedEvent(
-        accountId = accountId,
+        accountId = accountId!!,
         status = status,
         version = version,
         updatedAt = updatedAt,
@@ -36,7 +34,7 @@ fun Account.toStatusChangedEvent(): AccountStatusChangedEvent {
 fun AccountStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_STATUS_CHANGED_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = this.accountId.id.toString(),
     data = data,
     version = this.version,
     timestamp = Instant.now(),
@@ -46,7 +44,7 @@ fun AccountStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEven
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_STATUS_CHANGED_V1,
     aggregateId = this.accountId.id.toString(),
-    version = this.version,
+    version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)
 )

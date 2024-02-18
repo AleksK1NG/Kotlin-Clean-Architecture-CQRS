@@ -9,12 +9,12 @@ import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import java.time.Instant
+import javax.security.auth.login.AccountNotFoundException
 
 
 @ControllerAdvice
 class GlobalControllerAdvice {
 
-    // DuplicateKeyException
     @ExceptionHandler(value = [RuntimeException::class])
     fun handleRuntimeException(ex: RuntimeException, request: ServerHttpRequest): ResponseEntity<ErrorHttpResponse> {
         val errorHttpResponse = ErrorHttpResponse(
@@ -41,6 +41,20 @@ class GlobalControllerAdvice {
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
             .also { log.error { "(GlobalControllerAdvice) DuplicateKeyException: ${ex.message}" } }
+    }
+
+    @ExceptionHandler(value = [AccountNotFoundException::class])
+    fun handleAccountNotFoundException(ex: AccountNotFoundException, request: ServerHttpRequest): ResponseEntity<ErrorHttpResponse> {
+        val errorHttpResponse = ErrorHttpResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.message ?: "",
+            Instant.now().toString()
+        )
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(errorHttpResponse)
+            .also { log.error { "(GlobalControllerAdvice) AccountNotFoundException: ${ex.message}" } }
     }
 
     private companion object {

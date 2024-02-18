@@ -16,7 +16,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
 import org.springframework.stereotype.Component
-import java.time.Instant
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -32,42 +31,21 @@ class AccountProjectionRepositoryImpl(
 
     override suspend fun createAccount(account: Account): Account = repositoryScope {
         val insertOneResult = accountsCollection.insertOne(account.toDocument())
-        log.info { "account insertOneResult: $insertOneResult, account: $account" }
+        log.info { "account insertOneResult: ${insertOneResult}, account: $account" }
         account
     }
 
     override suspend fun updateAccount(account: Account): Account = repositoryScope {
-//        val accountDocument = accountsCollection.find(eq(ACCOUNT_ID, account.accountId?.string()))
-//            .firstOrNull()
-//            ?: throw AccountNotFoundException(account.accountId?.string())
+        val filter = and(eq(ACCOUNT_ID, account.accountId?.string()), eq(VERSION, account.version))
+        val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
 
-//        val updatedAccount = accountDocument.toAccount().copy(
-//            contactInfo = account.contactInfo,
-//            personalInfo = account.personalInfo,
-//            address = account.address,
-//            balance = account.balance,
-//            status = account.status,
-//            version = accountDocument.version + 1,
-//            updatedAt = Instant.now(),
-//        )
-
-        try {
-            val filter = and(eq(ACCOUNT_ID, account.accountId?.string()), eq(VERSION, account.version))
-            val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
-
-            val res = accountsCollection.findOneAndUpdate(
-                filter,
-                account.copy(version = account.version + 1, updatedAt = Instant.now()).toBsonUpdate(),
-                options
-            )
-                ?.toAccount()
-                ?: throw AccountNotFoundException(account.accountId?.string())
-
-            res
-        } catch (e: Exception) {
-            log.error { e.message }
-            throw e
-        }
+        accountsCollection.findOneAndUpdate(
+            filter,
+            account.incVersion().toBsonUpdate(),
+            options
+        )
+            ?.toAccount()
+            ?: throw AccountNotFoundException(account.accountId?.string())
     }
 
     override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {

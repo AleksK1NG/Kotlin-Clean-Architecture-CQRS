@@ -27,11 +27,12 @@ class OutboxRepositoryImpl(
     override suspend fun insert(event: OutboxEvent): OutboxEvent = repositoryScope {
         dbClient.sql(INSERT_OUTBOX_EVENT_QUERY.trimMargin())
             .bindValues(event.toPostgresValuesMap())
-            .map { row, _ -> row.get("event_id", String::class.java) }
+            .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
             .one()
-            .awaitSingleOrNull()
+            .awaitSingle()
             .also { log.info { "saved event: $it" } }
-            .let { _ -> event }
+
+        event
     }
 
     override suspend fun deleteWithLock(
@@ -41,7 +42,7 @@ class OutboxRepositoryImpl(
         tx.executeAndAwait {
             dbClient.sql(GET_OUTBOX_EVENT_BY_ID_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
                 .bindValues(mutableMapOf("eventId" to event.eventId))
-                .map { row, _ -> row.get("event_id", String::class.java) }
+                .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
                 .one()
                 .awaitSingleOrNull()
                 .let { callback(event) }
@@ -61,10 +62,10 @@ class OutboxRepositoryImpl(
                 .map { row, _ -> row.toOutboxEvent() }
                 .all()
                 .asFlow()
-                .onStart { log.info { "start publishing outbox events: $batchSize" } }
+                .onStart { log.info { "start publishing outbox events batch: $batchSize" } }
                 .onEach { callback(it) }
                 .onEach { event -> deleteOutboxEvent(event) }
-                .onCompletion { log.info { "completed publishing outbox events: $batchSize" } }
+                .onCompletion { log.info { "completed publishing outbox events batch: $batchSize" } }
                 .collect()
         }
     }
@@ -88,6 +89,7 @@ class OutboxRepositoryImpl(
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private const val ROW_EVENT_ID = "event_id"
     }
 }
 

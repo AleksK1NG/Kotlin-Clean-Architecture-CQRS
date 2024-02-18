@@ -23,10 +23,8 @@ data class ContactInfoChangedEvent(
 
 
 fun Account.toContactInfoChangedEvent(): ContactInfoChangedEvent {
-    requireNotNull(accountId) { "accountId must be provided" }
-
     return  ContactInfoChangedEvent(
-        accountId = this.accountId,
+        accountId = this.accountId!!,
         contactInfo = this.contactInfo,
         version = this.version,
         updatedAt = this.updatedAt,

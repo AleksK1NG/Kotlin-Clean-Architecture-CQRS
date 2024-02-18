@@ -50,15 +50,13 @@ fun AccountCreatedEvent.toAccount() = Account(
     personalInfo = personalInfo,
     address = address,
     version = version,
-    updatedAt = updatedAt,
     createdAt = createdAt,
+    updatedAt = updatedAt
 )
 
 fun Account.toAccountCreatedEvent(): AccountCreatedEvent {
-    requireNotNull(accountId) { "accountId must be provided" }
-
     return AccountCreatedEvent(
-        accountId = accountId,
+        accountId = accountId!!,
         contactInfo = contactInfo,
         personalInfo = personalInfo,
         address = address,

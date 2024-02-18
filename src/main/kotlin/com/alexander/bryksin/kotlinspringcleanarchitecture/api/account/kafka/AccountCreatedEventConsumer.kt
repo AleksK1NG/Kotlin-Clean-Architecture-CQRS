@@ -56,7 +56,7 @@ class AccountCreatedEventConsumer(
         log.info { "consumerRecord successfully processed: $record" }
     }
 
-    private val accountCreatedErrorHandler: ErrorHandler = { err, ack, consumerRecord ->
+    private val accountCreatedErrorHandler: ErrorHandler<AccountCreatedEvent> = { err, ack, consumerRecord, clazz ->
         log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }
 
         val retryCount = consumerRecord.getRetryCount()
