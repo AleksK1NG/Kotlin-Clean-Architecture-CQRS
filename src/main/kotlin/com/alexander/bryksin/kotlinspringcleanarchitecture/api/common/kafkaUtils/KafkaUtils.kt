@@ -1,6 +1,8 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.EventProcessor
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.header.Headers
 
@@ -15,6 +17,14 @@ fun getConsumerRecordInfo(consumerRecord: ConsumerRecord<String, ByteArray>, wit
         "topic: $topic key: $key partition: $partition offset: $offset timestamp: $timestamp value: $value"
     else
         "topic: $topic key: $key partition: $partition offset: $offset timestamp: $timestamp"
+}
+
+fun ConsumerRecord<String, ByteArray>.info(withValue: Boolean = true): String {
+    val value = String(value())
+    return if (withValue)
+        "topic: ${topic()} key: ${key()} partition: ${partition()} offset: ${offset()} timestamp: ${timestamp()} value: $value"
+    else
+        "topic: ${topic()} key: ${key()} partition: ${partition()} offset: ${offset()} timestamp: ${timestamp()}"
 }
 
 fun ConsumerRecord<String, ByteArray>.getRetryCount(): Int = try {
@@ -43,4 +53,9 @@ fun ConsumerRecord<String, ByteArray>.mergeHeaders(headers: Map<String, ByteArra
 
 fun buildRetryCountHeader(count: Int): Map<String, ByteArray> {
     return mapOf(EventProcessor.KAFKA_HEADERS_RETRY to count.toString().toByteArray(Charsets.UTF_8))
+}
+
+fun <T> Serializer.deserializeRecordToEvent(consumerRecord: ConsumerRecord<String, ByteArray>, clazz: Class<T>): T {
+    val outboxEvent = deserialize(consumerRecord.value(), OutboxEvent::class.java)
+    return deserialize(outboxEvent.data, clazz)
 }

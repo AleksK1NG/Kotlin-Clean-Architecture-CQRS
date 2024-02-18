@@ -1,6 +1,5 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.deserializeRecordToEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
@@ -13,6 +12,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Component
 import kotlin.coroutines.CoroutineContext
@@ -28,7 +28,7 @@ class EventProcessor(
     private val kafkaTopics: KafkaTopics
 ) {
 
-    fun <T> runProcess(
+    fun <T> process(
         ack: Acknowledgment,
         consumerRecord: ConsumerRecord<String, ByteArray>,
         deserializationClazz: Class<T>,
@@ -39,14 +39,14 @@ class EventProcessor(
         onSuccess: suspend (T) -> Unit
     ) = runBlocking(processContext(context)) {
         try {
-            log.info { getConsumerRecordInfo(consumerRecord) }
+            log.info { consumerRecord.info() }
             val event = serializer.deserializeRecordToEvent(consumerRecord, deserializationClazz)
             onSuccess(event)
         } catch (e: Exception) {
-            log.error { "error while processing event: ${e.message}" }
+            log.error { "error while processing event: ${e.message}, data: ${consumerRecord.info()}" }
 
             if (unprocessableExceptions.contains(e::class.java) || dlqExceptions.contains(e::class.java)) {
-                log.warn { "publishing to DLQ: ${e.message}" }
+                log.warn { "publishing to DLQ: ${e.message}, data: ${consumerRecord.info()}" }
 
                 publisher.publish(
                     topic = kafkaTopics.deadLetterQueue.name,
@@ -65,35 +65,54 @@ class EventProcessor(
 
     fun defaultErrorRetryHandler(retryTopic: String, maxRetryCount: Int = 3): ErrorHandler =
         { err, ack, consumerRecord ->
-            log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }
-
-            val retryCount = consumerRecord.getRetryCount()
-            val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
-            val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
-
-            if (retryCount >= maxRetryCount) {
-                publisher.publish(
-                    topic = kafkaTopics.deadLetterQueue.name,
-                    key = consumerRecord.key(),
-                    data = consumerRecord.value(),
-                    headers = mergedHeaders
-                )
-                log.error {
-                    "retry count: $retryCount of: $maxRetryCount exceed, published to dlq: ${getConsumerRecordInfo(consumerRecord)}"
-                }
-                ack.acknowledge()
-            } else {
-                publisher.publish(
-                    topic = retryTopic,
-                    key = consumerRecord.key(),
-                    data = consumerRecord.value(),
-                    headers = mergedHeaders
-                )
-
-                log.warn { "published retry topic: ${kafkaTopics.accountCreated.name}" }
-                ack.acknowledge()
-            }
+            handleRetry(
+                err = err,
+                ack = ack,
+                consumerRecord = consumerRecord,
+                maxRetryCount = maxRetryCount,
+                retryTopic = retryTopic
+            )
         }
+
+
+    private suspend fun handleRetry(
+        err: Throwable,
+        ack: Acknowledgment,
+        consumerRecord: ConsumerRecord<String, ByteArray>,
+        maxRetryCount: Int,
+        retryTopic: String,
+    ) {
+        log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
+
+        val retryCount = consumerRecord.getRetryCount()
+        val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
+        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
+
+        if (retryCount >= maxRetryCount) {
+            publisher.publish(
+                topic = kafkaTopics.deadLetterQueue.name,
+                key = consumerRecord.key(),
+                data = consumerRecord.value(),
+                headers = mergedHeaders
+            )
+            log.error {
+                "retry: $retryCount of $maxRetryCount exceed, published to dlq: ${consumerRecord.info()}"
+            }
+
+            ack.acknowledge()
+            return
+        }
+
+        publisher.publish(
+            topic = retryTopic,
+            key = consumerRecord.key(),
+            data = consumerRecord.value(),
+            headers = mergedHeaders
+        )
+
+        log.warn { "published retry topic: ${kafkaTopics.accountCreated.name}" }
+        ack.acknowledge()
+    }
 
     private fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
         Job() + CoroutineName(this::class.java.name) + context
@@ -103,7 +122,8 @@ class EventProcessor(
         private val dlqExceptions = setOf(
             SerializationException::class.java,
             LowerEventVersionException::eventVersion,
-            SameEventVersionException::class.java
+            SameEventVersionException::class.java,
+            DuplicateKeyException::class.java
         )
         const val KAFKA_HEADERS_RETRY = "X-Kafka-Retry"
     }

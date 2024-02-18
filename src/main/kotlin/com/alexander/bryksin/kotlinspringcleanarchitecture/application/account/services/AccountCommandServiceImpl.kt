@@ -5,6 +5,8 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.e
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.AccountNotFoundException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.InvalidTransactionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.EmailVerifierClient
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.PaymentClient
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
@@ -12,8 +14,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.except
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.EmailVerifierClient
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.PaymentClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import org.springframework.stereotype.Service

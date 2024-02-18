@@ -2,8 +2,9 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.UpperEventVersionException
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountMongoRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -15,12 +16,12 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Component
-class AccountEventsHandlerImpl(
-    private val accountMongoRepository: AccountMongoRepository
-) : AccountEventsHandler {
+class AccountEventHandlerServiceImpl(
+    private val accountProjectionRepository: AccountProjectionRepository
+) : AccountEventHandlerService {
 
     override suspend fun on(event: AccountCreatedEvent): Unit = serviceScope {
-        accountMongoRepository.createAccount(event.toAccount())
+        accountProjectionRepository.createAccount(event.toAccount())
     }
 
     override suspend fun on(event: BalanceDepositedEvent): Unit = serviceScope {
@@ -63,7 +64,7 @@ class AccountEventsHandlerImpl(
         try {
             val foundAccount = findAndValidateVersion(accountId, eventVersion)
             val accountToUpdate = block(foundAccount)
-            return accountMongoRepository.updateAccount(accountToUpdate)
+            return accountProjectionRepository.updateAccount(accountToUpdate)
                 .also { log.info { "mongo repository updated account: $it" } }
         } catch (e: Exception) {
             log.error { e.message }
@@ -76,8 +77,8 @@ class AccountEventsHandlerImpl(
             eventVersion < account.version + 1 ->
                 throw LowerEventVersionException(account.accountId, account.version, eventVersion)
 
-            eventVersion == account.version + 1 -> log.info { "valid version: ${account.version} - $eventVersion" }
-//                throw SameEventVersionException(account.accountId, account.version, eventVersion)
+            eventVersion == account.version ->
+                throw SameEventVersionException(account.accountId, account.version, eventVersion)
 
             eventVersion > account.version + 1 ->
                 throw UpperEventVersionException(account.accountId, account.version, eventVersion)
@@ -85,7 +86,7 @@ class AccountEventsHandlerImpl(
     }
 
     private suspend fun findAndValidateVersion(accountId: AccountId, eventVersion: Long): Account {
-        val foundAccount = accountMongoRepository.getAccountById(accountId)
+        val foundAccount = accountProjectionRepository.getAccountById(accountId)
             ?: throw AccountNotFoundException(accountId.string())
 
         validateVersion(foundAccount, eventVersion)

@@ -1,5 +1,7 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.common.serializer
 
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component

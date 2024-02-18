@@ -1,6 +1,6 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.clients
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.PaymentClient
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.PaymentClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 

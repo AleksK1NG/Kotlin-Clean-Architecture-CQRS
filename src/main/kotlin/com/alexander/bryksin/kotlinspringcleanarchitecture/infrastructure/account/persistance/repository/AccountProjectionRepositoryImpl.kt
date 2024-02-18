@@ -1,6 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.repository
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountMongoRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.AccountDocument
@@ -23,9 +23,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Component
-class AccountMongoRepositoryImpl(
+class AccountProjectionRepositoryImpl(
     mongoClient: MongoClient,
-) : AccountMongoRepository {
+) : AccountProjectionRepository {
 
     private val accountsDB = mongoClient.getDatabase(ACCOUNTS_DB)
     private val accountsCollection = accountsDB.getCollection<AccountDocument>(ACCOUNTS_COLLECTION)

@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.controllerAdvice
 
 data class ErrorHttpResponse(
     val status: Int,

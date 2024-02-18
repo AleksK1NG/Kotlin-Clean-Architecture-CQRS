@@ -32,18 +32,23 @@ class AccountRepositoryImpl(
 
 
     override suspend fun updateAccount(account: Account): Account = repositoryScope {
-        val rowsUpdated = dbClient.sql(OPTIMISTIC_UPDATE_QUERY.trimMargin())
-            .bindValues(account.copy(updatedAt = Instant.now()).toPostgresEntityMap(withOptimisticLock = true))
-            .fetch()
-            .rowsUpdated()
-            .awaitSingle()
+        try {
+            val rowsUpdated = dbClient.sql(OPTIMISTIC_UPDATE_QUERY.trimMargin())
+                .bindValues(account.copy(updatedAt = Instant.now()).toPostgresEntityMap(withOptimisticLock = true))
+                .fetch()
+                .rowsUpdated()
+                .awaitSingle()
 
-        if (rowsUpdated == 0L) {
-            log.warn { "error optimistic lock while updating id: ${account.accountId?.id} version: ${account.version}" }
-            throw OptimisticLockException(account.accountId?.id, account.version)
+            if (rowsUpdated == 0L) {
+                log.warn { "error optimistic lock while updating id: ${account.accountId?.id} version: ${account.version}" }
+                throw OptimisticLockException(account.accountId?.id, account.version)
+            }
+
+            account.copy(version = account.version + 1)
+        } catch (e: Exception) {
+            log.error { "${e.message} type: ${e::class.java}" }
+            throw e
         }
-
-        account.copy(version = account.version + 1)
     }
 
     override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {

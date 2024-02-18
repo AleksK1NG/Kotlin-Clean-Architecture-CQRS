@@ -1,6 +1,7 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.controllerAdvice
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -13,6 +14,7 @@ import java.time.Instant
 @ControllerAdvice
 class GlobalControllerAdvice {
 
+    // DuplicateKeyException
     @ExceptionHandler(value = [RuntimeException::class])
     fun handleRuntimeException(ex: RuntimeException, request: ServerHttpRequest): ResponseEntity<ErrorHttpResponse> {
         val errorHttpResponse = ErrorHttpResponse(
@@ -25,6 +27,20 @@ class GlobalControllerAdvice {
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
             .also { log.error { "(GlobalControllerAdvice) INTERNAL_SERVER_ERROR: ${ex.message}" } }
+    }
+
+    @ExceptionHandler(value = [DuplicateKeyException::class])
+    fun handleDuplicateKeyException(ex: DuplicateKeyException, request: ServerHttpRequest): ResponseEntity<ErrorHttpResponse> {
+        val errorHttpResponse = ErrorHttpResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.message ?: "",
+            Instant.now().toString()
+        )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(errorHttpResponse)
+            .also { log.error { "(GlobalControllerAdvice) DuplicateKeyException: ${ex.message}" } }
     }
 
     private companion object {

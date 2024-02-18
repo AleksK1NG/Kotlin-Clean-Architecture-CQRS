@@ -4,7 +4,10 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 
 interface AccountRepository {
+
     suspend fun getAccountById(id: AccountId): Account?
+
     suspend fun saveAccount(account: Account): Account
+
     suspend fun updateAccount(account: Account): Account
 }

@@ -1,6 +1,6 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.clients
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients.EmailVerifierClient
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.EmailVerifierClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.delay
 import org.springframework.stereotype.Component

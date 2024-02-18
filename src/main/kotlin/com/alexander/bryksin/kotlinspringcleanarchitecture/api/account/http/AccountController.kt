@@ -6,6 +6,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.s
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.validation.ConstraintViolationException
 import jakarta.validation.Valid
 import kotlinx.coroutines.*
 import org.springframework.http.HttpStatus
@@ -74,7 +75,7 @@ class AccountController(
     @PutMapping(path = ["/{id}/contacts/"])
     suspend fun changeContactInfo(
         @PathVariable id: UUID,
-        @Valid @RequestBody request: ChangeAccountStatusRequest
+        @Valid @RequestBody request: ChangeContactInfoRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
             .let { ResponseEntity.ok(it) }
