@@ -12,10 +12,15 @@ import java.util.*
 data class PersonalInfoUpdatedEvent(
     val accountId: AccountId,
     val personalInfo: PersonalInfo = PersonalInfo(),
-    val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) : AccountEvent {
+
+    override val eventId: String,
+    override val version: Long = 0,
+    override val aggregateId: String,
+    override val eventType: String,
+    override val timestamp: Instant,
+) : DomainEvent {
     companion object {
         const val ACCOUNT_PERSONAL_INFO_UPDATED_V1 = "ACCOUNT_PERSONAL_INFO_UPDATED_V1"
     }
@@ -23,28 +28,32 @@ data class PersonalInfoUpdatedEvent(
 
 fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
     return PersonalInfoUpdatedEvent(
-        accountId = this.accountId!!,
-        personalInfo = this.personalInfo,
-        version = this.version,
-        updatedAt = this.updatedAt,
-        createdAt = this.createdAt,
+        accountId = accountId!!,
+        aggregateId = accountId?.string() ?: "",
+        eventId = UUID.randomUUID().toString(),
+        eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
+        timestamp = Instant.now(),
+        personalInfo = personalInfo,
+        version = version,
+        updatedAt = updatedAt,
+        createdAt = createdAt,
     )
 }
 
 fun PersonalInfoUpdatedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
-    aggregateId = this.accountId.id.toString(),
+    aggregateId = aggregateId,
     data = data,
-    version = this.version,
+    version = version,
     timestamp = Instant.now(),
 )
 
 fun PersonalInfoUpdatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
-    aggregateId = this.accountId?.id.toString(),
-    version = this.version,
+    aggregateId = aggregateId,
+    version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)
 )

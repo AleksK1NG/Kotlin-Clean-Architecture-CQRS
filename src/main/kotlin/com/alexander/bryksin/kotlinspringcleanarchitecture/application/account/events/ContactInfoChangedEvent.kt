@@ -12,10 +12,15 @@ import java.util.*
 data class ContactInfoChangedEvent(
     val accountId: AccountId,
     val contactInfo: ContactInfo = ContactInfo(),
-    val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) : AccountEvent{
+
+    override val eventId: String,
+    override val eventType: String,
+    override val aggregateId: String,
+    override val version: Long = 0,
+    override val timestamp: Instant,
+) : DomainEvent {
     companion object {
         const val ACCOUNT_CONTACT_INFO_CHANGED_V1 = "ACCOUNT_CONTACT_INFO_CHANGED_V1"
     }
@@ -23,29 +28,34 @@ data class ContactInfoChangedEvent(
 
 
 fun Account.toContactInfoChangedEvent(): ContactInfoChangedEvent {
-    return  ContactInfoChangedEvent(
-        accountId = this.accountId!!,
-        contactInfo = this.contactInfo,
-        version = this.version,
-        updatedAt = this.updatedAt,
-        createdAt = this.createdAt,
+    return ContactInfoChangedEvent(
+        accountId = accountId!!,
+        aggregateId = accountId.toString(),
+        eventId = UUID.randomUUID().toString(),
+        eventType = ACCOUNT_CONTACT_INFO_CHANGED_V1,
+        timestamp = Instant.now(),
+        version = version,
+
+        contactInfo = contactInfo,
+        updatedAt = updatedAt,
+        createdAt = createdAt,
     )
 }
 
 fun ContactInfoChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_CONTACT_INFO_CHANGED_V1,
-    aggregateId = this.accountId?.id.toString(),
+    aggregateId = aggregateId,
     data = data,
-    version = this.version,
+    version = version,
     timestamp = Instant.now(),
 )
 
 fun ContactInfoChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_CONTACT_INFO_CHANGED_V1,
-    aggregateId = this.accountId?.id.toString(),
-    version = this.version,
+    aggregateId = aggregateId,
+    version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)
 )

@@ -40,7 +40,7 @@ class EventProcessor(
     ) = runBlocking(processContext(context)) {
         try {
             log.info { consumerRecord.info() }
-            val event = serializer.deserializeRecordToEvent(consumerRecord, deserializationClazz)
+            val event = serializer.deserialize(consumerRecord.value(), deserializationClazz)
             onSuccess(event)
         } catch (e: Exception) {
             log.error { "error while processing event: ${e.message}, data: ${consumerRecord.info()}" }
@@ -87,7 +87,7 @@ class EventProcessor(
         retryTopic: String,
         deserializationClazz: Class<T>
     ) {
-        val event = serializer.deserializeRecordToEvent(consumerRecord, deserializationClazz)
+        val event = serializer.deserialize(consumerRecord.value(), deserializationClazz)
 
         log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
 

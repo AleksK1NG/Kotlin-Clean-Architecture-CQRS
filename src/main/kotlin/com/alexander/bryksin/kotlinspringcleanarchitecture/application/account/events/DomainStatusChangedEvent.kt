@@ -1,6 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountStatusChangedEvent.Companion.ACCOUNT_STATUS_CHANGED_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.DomainStatusChangedEvent.Companion.ACCOUNT_STATUS_CHANGED_V1
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
@@ -9,41 +9,50 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.
 import java.time.Instant
 import java.util.*
 
-data class AccountStatusChangedEvent(
+data class DomainStatusChangedEvent(
     val accountId: AccountId,
     val status: AccountStatus = AccountStatus.FREE,
-    val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) : AccountEvent {
+
+    override val eventId: String,
+    override val version: Long = 0,
+    override val aggregateId: String,
+    override val eventType: String,
+    override val timestamp: Instant,
+) : DomainEvent {
     companion object {
         const val ACCOUNT_STATUS_CHANGED_V1 = "ACCOUNT_STATUS_CHANGED_V1"
     }
 }
 
-fun Account.toStatusChangedEvent(): AccountStatusChangedEvent {
-    return AccountStatusChangedEvent(
+fun Account.toStatusChangedEvent(): DomainStatusChangedEvent {
+    return DomainStatusChangedEvent(
         accountId = accountId!!,
-        status = status,
+        aggregateId = accountId.toString(),
+        eventId = UUID.randomUUID().toString(),
+        eventType = ACCOUNT_STATUS_CHANGED_V1,
+        timestamp = Instant.now(),
         version = version,
+        status = status,
         updatedAt = updatedAt,
         createdAt = createdAt,
     )
 }
 
-fun AccountStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
+fun DomainStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_STATUS_CHANGED_V1,
-    aggregateId = this.accountId.id.toString(),
+    aggregateId = aggregateId,
     data = data,
     version = this.version,
     timestamp = Instant.now(),
 )
 
-fun AccountStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
+fun DomainStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_STATUS_CHANGED_V1,
-    aggregateId = this.accountId.id.toString(),
+    aggregateId = aggregateId,
     version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)

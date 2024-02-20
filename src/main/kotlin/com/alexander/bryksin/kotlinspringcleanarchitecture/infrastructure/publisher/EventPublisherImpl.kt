@@ -19,7 +19,7 @@ class EventPublisherImpl(
 
     override suspend fun publish(event: OutboxEvent, headers: Map<String, ByteArray>) {
         try {
-            val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, serializer.serializeToBytes(event))
+            val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, event.data)
             headers.forEach { (key, value) -> msg.headers().add(key, value) }
             kafkaTemplate.send(msg).await().also { log.info { "Published outbox event: $it" } }
         } catch (e: Exception) {

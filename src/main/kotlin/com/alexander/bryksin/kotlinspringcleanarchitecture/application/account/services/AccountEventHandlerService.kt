@@ -14,5 +14,5 @@ interface AccountEventHandlerService {
 
     suspend fun on(event: ContactInfoChangedEvent)
 
-    suspend fun on(event: AccountStatusChangedEvent)
+    suspend fun on(event: DomainStatusChangedEvent)
 }

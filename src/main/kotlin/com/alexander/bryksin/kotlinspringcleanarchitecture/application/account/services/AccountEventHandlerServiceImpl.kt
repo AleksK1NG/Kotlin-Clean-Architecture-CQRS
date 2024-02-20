@@ -50,7 +50,7 @@ class AccountEventHandlerServiceImpl(
         }
     }
 
-    override suspend fun on(event: AccountStatusChangedEvent): Unit = serviceScope {
+    override suspend fun on(event: DomainStatusChangedEvent): Unit = serviceScope {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.updateStatus(event.status)
         }

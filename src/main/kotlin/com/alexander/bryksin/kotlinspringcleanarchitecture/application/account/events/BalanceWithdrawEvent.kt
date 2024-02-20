@@ -12,10 +12,15 @@ import java.util.*
 data class BalanceWithdrawEvent(
     val accountId: AccountId,
     val balance: Balance,
-    val version: Long = 0,
     val updatedAt: Instant? = null,
     val createdAt: Instant? = null,
-) : AccountEvent {
+
+    override val eventId: String,
+    override val eventType: String,
+    override val aggregateId: String,
+    override val version: Long = 0,
+    override val timestamp: Instant,
+) : DomainEvent {
     companion object {
         const val ACCOUNT_BALANCE_WITHDRAW_V1 = "ACCOUNT_BALANCE_WITHDRAW_V1"
     }
@@ -24,28 +29,33 @@ data class BalanceWithdrawEvent(
 
 fun Account.toBalanceWithdrawEvent(): BalanceWithdrawEvent {
     return BalanceWithdrawEvent(
-        accountId = this.accountId!!,
-        balance = this.balance,
-        version = this.version,
-        updatedAt = this.updatedAt,
-        createdAt = this.createdAt,
+        accountId = accountId!!,
+        aggregateId = accountId.toString(),
+        eventId = UUID.randomUUID().toString(),
+        eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
+        timestamp = Instant.now(),
+        version = version,
+
+        balance = balance,
+        updatedAt = updatedAt,
+        createdAt = createdAt,
     )
 }
 
 fun BalanceWithdrawEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
-    aggregateId = this.accountId.id.toString(),
+    aggregateId = aggregateId,
     data = data,
-    version = this.version,
+    version = version,
     timestamp = Instant.now(),
 )
 
 fun BalanceWithdrawEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
-    aggregateId = this.accountId.id.toString(),
-    version = this.version,
+    aggregateId = aggregateId,
+    version = version,
     timestamp = Instant.now(),
     data = serializer.serializeToBytes(this)
 )

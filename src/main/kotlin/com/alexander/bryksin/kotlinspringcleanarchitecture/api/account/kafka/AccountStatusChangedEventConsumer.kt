@@ -1,7 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountStatusChangedEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.DomainStatusChangedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -24,7 +24,7 @@ class AccountStatusChangedEventConsumer(
     fun process(ack: Acknowledgment, record: ConsumerRecord<String, ByteArray>) = eventProcessor.process(
         ack = ack,
         consumerRecord = record,
-        deserializationClazz = AccountStatusChangedEvent::class.java,
+        deserializationClazz = DomainStatusChangedEvent::class.java,
         onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountStatusChanged.name, 3)
     ) { event ->
         accountEventHandlerService.on(event)
@@ -40,7 +40,7 @@ class AccountStatusChangedEventConsumer(
     fun processRetry(ack: Acknowledgment, record: ConsumerRecord<String, ByteArray>) = eventProcessor.process(
         ack = ack,
         consumerRecord = record,
-        deserializationClazz = AccountStatusChangedEvent::class.java,
+        deserializationClazz = DomainStatusChangedEvent::class.java,
         onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountStatusChangedRetry.name, 3)
     ) { event ->
         accountEventHandlerService.on(event)

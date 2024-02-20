@@ -2,7 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.publi
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent.Companion.ACCOUNT_CREATED_EVENT_V1
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountStatusChangedEvent.Companion.ACCOUNT_STATUS_CHANGED_V1
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.DomainStatusChangedEvent.Companion.ACCOUNT_STATUS_CHANGED_V1
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.BalanceDepositedEvent.Companion.ACCOUNT_BALANCE_DEPOSITED_V1
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.BalanceWithdrawEvent.Companion.ACCOUNT_BALANCE_WITHDRAW_V1
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.ContactInfoChangedEvent.Companion.ACCOUNT_CONTACT_INFO_CHANGED_V1
@@ -23,7 +23,7 @@ fun OutboxEvent.kafkaTopic() = when (eventType) {
 
 fun accountEventFromTopic(topic: String, serializer: Serializer): Class<*> = when (topic) {
     ACCOUNT_CREATED_EVENT_V1 -> AccountCreatedEvent::class.java
-    ACCOUNT_STATUS_CHANGED_V1 -> AccountStatusChangedEvent::class.java
+    ACCOUNT_STATUS_CHANGED_V1 -> DomainStatusChangedEvent::class.java
     ACCOUNT_BALANCE_DEPOSITED_V1 -> BalanceDepositedEvent::class.java
     ACCOUNT_BALANCE_WITHDRAW_V1 -> BalanceWithdrawEvent::class.java
     ACCOUNT_CONTACT_INFO_CHANGED_V1 -> ContactInfoChangedEvent::class.java
