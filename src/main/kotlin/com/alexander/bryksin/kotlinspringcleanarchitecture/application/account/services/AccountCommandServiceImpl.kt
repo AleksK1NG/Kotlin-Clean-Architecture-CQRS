@@ -76,8 +76,9 @@ class AccountCommandServiceImpl(
 
         val (account, event) = tx.executeAndAwait {
             val foundAccount = getAccountById(command.accountId)
-            val account = accountRepository.updateAccount(foundAccount.depositBalance(command.balance.amount))
-            val event = outboxRepository.insert(account.toBalanceDepositedEvent().toOutboxEvent(serializer))
+            val account = accountRepository.updateAccount(foundAccount.depositBalance(command.balance))
+            val event = account.toBalanceDepositedEvent(command.balance).toOutboxEvent(serializer)
+            outboxRepository.insert(event)
             account to event
         }
 
@@ -90,8 +91,9 @@ class AccountCommandServiceImpl(
 
         val (account, event) = tx.executeAndAwait {
             val foundAccount = getAccountById(command.accountId)
-            val account = accountRepository.updateAccount(foundAccount.withdrawBalance(command.balance.amount))
-            val event = outboxRepository.insert(account.toBalanceWithdrawEvent().toOutboxEvent(serializer))
+            val account = accountRepository.updateAccount(foundAccount.withdrawBalance(command.balance))
+            val event = account.toBalanceWithdrawEvent(command.balance).toOutboxEvent(serializer)
+            outboxRepository.insert(event)
             account to event
         }
 

@@ -26,14 +26,14 @@ class AccountEventHandlerServiceImpl(
 
     override suspend fun on(event: BalanceDepositedEvent): Unit = serviceScope {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.depositBalance(event.balance.amount)
+            foundAccount.depositBalance(event.balance)
         }
     }
 
 
     override suspend fun on(event: BalanceWithdrawEvent): Unit = serviceScope {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.withdrawBalance(event.balance.amount)
+            foundAccount.withdrawBalance(event.balance)
         }
     }
 

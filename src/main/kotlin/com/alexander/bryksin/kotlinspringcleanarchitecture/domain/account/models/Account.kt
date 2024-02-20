@@ -48,16 +48,17 @@ class Account(
         this.createdAt = createdAt
     }
 
-    fun depositBalance(amount: Long): Account {
-        if (amount < 0) throw InvalidAmountException(accountId?.string() ?: "", amount)
-        balance = balance.copy(amount = (this.balance.amount + amount))
+    fun depositBalance(newBalance: Balance): Account {
+        if (newBalance.amount < 0) throw InvalidAmountException(accountId?.string() ?: "", newBalance.amount)
+        balance = balance.copy(amount = (balance.amount + newBalance.amount))
         updatedAt = Instant.now()
         return this
     }
 
-    fun withdrawBalance(amount: Long): Account {
-        if ((balance.amount - amount) < 0) throw InvalidAmountException(accountId?.string() ?: "", amount)
-        balance = balance.copy(amount = (balance.amount - amount))
+    fun withdrawBalance(newBalance: Balance): Account {
+        val newAmount = (balance.amount - newBalance.amount)
+        if ((newAmount) < 0) throw InvalidAmountException(accountId?.string() ?: "", newBalance.amount)
+        balance = balance.copy(amount = newAmount)
         updatedAt = Instant.now()
         return this
     }

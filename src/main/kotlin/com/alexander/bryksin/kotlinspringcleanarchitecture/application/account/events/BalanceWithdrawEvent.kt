@@ -27,7 +27,7 @@ data class BalanceWithdrawEvent(
 }
 
 
-fun Account.toBalanceWithdrawEvent(): BalanceWithdrawEvent {
+fun Account.toBalanceWithdrawEvent(newBalance: Balance): BalanceWithdrawEvent {
     return BalanceWithdrawEvent(
         accountId = accountId!!,
         aggregateId = accountId.toString(),
@@ -36,7 +36,7 @@ fun Account.toBalanceWithdrawEvent(): BalanceWithdrawEvent {
         timestamp = Instant.now(),
         version = version,
 
-        balance = balance,
+        balance = newBalance,
         updatedAt = updatedAt,
         createdAt = createdAt,
     )

@@ -27,7 +27,7 @@ data class BalanceDepositedEvent(
 }
 
 
-fun Account.toBalanceDepositedEvent(): BalanceDepositedEvent {
+fun Account.toBalanceDepositedEvent(newBalance: Balance): BalanceDepositedEvent {
     return BalanceDepositedEvent(
         accountId = accountId!!,
         aggregateId = accountId.toString(),
@@ -36,7 +36,7 @@ fun Account.toBalanceDepositedEvent(): BalanceDepositedEvent {
         timestamp = Instant.now(),
         version = version,
 
-        balance = balance,
+        balance = newBalance,
         updatedAt = updatedAt,
         createdAt = createdAt,
     )
