@@ -20,8 +20,8 @@ class MongoInitializer(private val mongoClient: MongoClient) {
         try {
             mongoClient.listDatabases().collect { dbs -> log.info { "db names: ${dbs.toJson()}" } }
 
-            val db = mongoClient.getDatabase("accounts")
-            val collection = db.getCollection<AccountDocument>("accounts")
+            val db = mongoClient.getDatabase(ACCOUNTS_COLLECTION)
+            val collection = db.getCollection<AccountDocument>(ACCOUNTS_DB)
             log.info { "accounts collection: $collection" }
 
             val indexes = collection.listIndexes().map { it["name"] }.toSet()
@@ -53,5 +53,8 @@ class MongoInitializer(private val mongoClient: MongoClient) {
 
     private companion object {
         private val log = KotlinLogging.logger { }
+
+        private const val ACCOUNTS_COLLECTION = "accounts"
+        private const val ACCOUNTS_DB = "accounts"
     }
 }

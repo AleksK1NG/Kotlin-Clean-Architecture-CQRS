@@ -7,6 +7,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.e
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidCurrencyException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
@@ -65,7 +66,7 @@ class EventProcessor(
 
     fun <T> defaultErrorRetryHandler(
         retryTopic: String,
-        maxRetryCount: Int = 3,
+        maxRetryCount: Int = DEFAULT_RETRY_COUNT ,
     ): ErrorHandler<T> =
         { err, ack, consumerRecord, clazz ->
             handleRetry(
@@ -78,7 +79,6 @@ class EventProcessor(
             )
         }
 
-
     private suspend fun <T> handleRetry(
         err: Throwable,
         ack: Acknowledgment,
@@ -87,11 +87,13 @@ class EventProcessor(
         retryTopic: String,
         deserializationClazz: Class<T>
     ) {
-        val event = serializer.deserialize(consumerRecord.value(), deserializationClazz)
+        runCatching { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
+            .onFailure { log.error { "serialization error: ${it.message}" } }
+            .onSuccess { log.info { "serialized message: $it" } }
 
         log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
 
-        val retryCount = consumerRecord.getRetryCount()
+        val retryCount = consumerRecord.getRetriesCount().getOrDefault(0)
         val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
         val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
 
@@ -102,9 +104,7 @@ class EventProcessor(
                 data = consumerRecord.value(),
                 headers = mergedHeaders
             )
-            log.error {
-                "retry: $retryCount of $maxRetryCount exceed, published to dlq: ${consumerRecord.info()}"
-            }
+            logDlqMsg(retryCount, maxRetryCount, consumerRecord)
 
             ack.acknowledge()
             return
@@ -117,12 +117,22 @@ class EventProcessor(
             headers = mergedHeaders
         )
 
-        log.warn { "published retry topic: ${kafkaTopics.accountCreated.name}" }
+        log.warn { "published retry topic: $retryTopic" }
         ack.acknowledge()
     }
 
-    private fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
+    fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
         Job() + CoroutineName(this::class.java.name) + context
+
+    private fun logDlqMsg(
+        retryCount: Int,
+        maxRetryCount: Int,
+        consumerRecord: ConsumerRecord<String, ByteArray>
+    ) {
+        log.error {
+            "retry: $retryCount of $maxRetryCount exceed, published to dlq: ${kafkaTopics.deadLetterQueue.name} data: ${consumerRecord.info()}"
+        }
+    }
 
     companion object {
         private val log = KotlinLogging.logger { }
@@ -130,8 +140,11 @@ class EventProcessor(
             SerializationException::class.java,
             LowerEventVersionException::eventVersion,
             SameEventVersionException::class.java,
-            DuplicateKeyException::class.java
+            DuplicateKeyException::class.java,
+            InvalidCurrencyException::class
         )
         const val KAFKA_HEADERS_RETRY = "X-Kafka-Retry"
+        private const val DEFAULT_RETRY_COUNT = 3
     }
 }
+

@@ -25,7 +25,7 @@ class AccountStatusChangedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = DomainStatusChangedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountStatusChanged.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountStatusChanged.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -41,7 +41,7 @@ class AccountStatusChangedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = DomainStatusChangedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountStatusChangedRetry.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountStatusChangedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -51,5 +51,6 @@ class AccountStatusChangedEventConsumer(
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private const val DEFAULT_RETRY_COUNT = 3
     }
 }

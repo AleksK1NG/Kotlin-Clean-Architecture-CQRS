@@ -54,6 +54,11 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
     }
 
+    override suspend fun getAccountByEmail(email: String): Account? = repositoryScope {
+        val filter = and(eq("contactInfo.email", email))
+        accountsCollection.find(filter).firstOrNull()?.toAccount()
+    }
+
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 

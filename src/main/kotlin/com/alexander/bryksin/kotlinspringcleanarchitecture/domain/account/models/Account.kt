@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidAmountException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidCurrencyException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.*
 import java.time.Instant
@@ -49,6 +50,11 @@ class Account(
     }
 
     fun depositBalance(newBalance: Balance): Account {
+        if (balance.balanceCurrency != newBalance.balanceCurrency) throw InvalidCurrencyException(
+            balance.balanceCurrency,
+            newBalance.balanceCurrency
+        )
+
         if (newBalance.amount < 0) throw InvalidAmountException(accountId?.string() ?: "", newBalance.amount)
         balance = balance.copy(amount = (balance.amount + newBalance.amount))
         updatedAt = Instant.now()
@@ -56,6 +62,11 @@ class Account(
     }
 
     fun withdrawBalance(newBalance: Balance): Account {
+        if (balance.balanceCurrency != newBalance.balanceCurrency) throw InvalidCurrencyException(
+            balance.balanceCurrency,
+            newBalance.balanceCurrency
+        )
+
         val newAmount = (balance.amount - newBalance.amount)
         if ((newAmount) < 0) throw InvalidAmountException(accountId?.string() ?: "", newBalance.amount)
         balance = balance.copy(amount = newAmount)
@@ -113,5 +124,12 @@ class Account(
         return this
     }
 
+    override fun toString(): String {
+        return "Account(accountId=$accountId, contactInfo=$contactInfo, personalInfo=$personalInfo, address=$address, balance=$balance, status=$status, version=$version, updatedAt=$updatedAt, createdAt=$createdAt)"
+    }
+
     companion object {}
+
+
+
 }

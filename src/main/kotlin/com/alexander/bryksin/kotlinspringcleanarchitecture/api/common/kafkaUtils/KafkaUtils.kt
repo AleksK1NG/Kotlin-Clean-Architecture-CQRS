@@ -34,7 +34,12 @@ fun ConsumerRecord<String, ByteArray>.getRetryCount(): Int = try {
     0
 }
 
-fun ConsumerRecord<String, ByteArray>.headersWithRetryCount(count: Int = 1): Headers = headers()
+fun ConsumerRecord<String, ByteArray>.getRetriesCount(): Result<Int> = runCatching {
+    String(headers().lastHeader(EventProcessor.KAFKA_HEADERS_RETRY).value()).toInt()
+}
+
+
+ fun ConsumerRecord<String, ByteArray>.headersWithRetryCount(count: Int = 1): Headers = headers()
     .remove(EventProcessor.KAFKA_HEADERS_RETRY)
     .add(EventProcessor.KAFKA_HEADERS_RETRY, count.toString().toByteArray(Charsets.UTF_8))
 

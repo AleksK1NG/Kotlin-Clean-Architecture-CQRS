@@ -26,7 +26,7 @@ class GlobalControllerAdvice {
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
-            .also { log.error { "(GlobalControllerAdvice) INTERNAL_SERVER_ERROR: ${ex.message}" } }
+            .also { log.error { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
     }
 
     @ExceptionHandler(value = [DuplicateKeyException::class])
@@ -40,7 +40,7 @@ class GlobalControllerAdvice {
             .status(HttpStatus.BAD_REQUEST)
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
-            .also { log.error { "(GlobalControllerAdvice) DuplicateKeyException: ${ex.message}" } }
+            .also { log.error { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
     }
 
     @ExceptionHandler(value = [AccountNotFoundException::class])
@@ -54,7 +54,7 @@ class GlobalControllerAdvice {
             .status(HttpStatus.NOT_FOUND)
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
-            .also { log.error { "(GlobalControllerAdvice) AccountNotFoundException: ${ex.message}" } }
+            .also { log.error { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
     }
 
     private companion object {

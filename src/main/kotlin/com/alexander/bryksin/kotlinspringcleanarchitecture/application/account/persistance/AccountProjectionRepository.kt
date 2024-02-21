@@ -10,4 +10,6 @@ interface AccountProjectionRepository {
     suspend fun updateAccount(account: Account): Account
 
     suspend fun getAccountById(id: AccountId): Account?
+
+    suspend fun getAccountByEmail(email: String): Account?
 }

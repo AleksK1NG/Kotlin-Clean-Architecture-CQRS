@@ -2,6 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.buildRetryCountHeader
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.getRetryCount
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.info
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.mergeHeaders
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent
@@ -32,11 +33,11 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, 5)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        log.info { "consumerRecord successfully processed: ${record.info(withValue = true)}" }
     }
 
 
@@ -49,12 +50,13 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, 5)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
         log.info { "consumerRecord successfully processed: $record" }
     }
+
 
     private val accountCreatedErrorHandler: ErrorHandler<AccountCreatedEvent> = { err, ack, consumerRecord, clazz ->
         log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }

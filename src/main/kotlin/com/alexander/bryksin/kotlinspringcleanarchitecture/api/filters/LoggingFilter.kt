@@ -17,7 +17,7 @@ class LoggingFilter : WebFilter {
 
         return chain.filter(exchange)
             .doOnSuccess {
-                if (!exchange.request.path.value().contains("actuator")) {
+                if (!exchange.request.path.value().contains(ACTUATOR)) {
                     val method = exchange.request.method.name().uppercase()
                     val path = exchange.request.path.value()
                     val statusCode = exchange.response.statusCode?.value()
@@ -29,5 +29,6 @@ class LoggingFilter : WebFilter {
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private const val ACTUATOR = "actuator"
     }
 }

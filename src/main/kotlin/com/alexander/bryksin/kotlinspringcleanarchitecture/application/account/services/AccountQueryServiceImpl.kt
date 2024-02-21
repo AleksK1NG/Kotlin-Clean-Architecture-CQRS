@@ -1,6 +1,8 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services
 
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
@@ -15,10 +17,15 @@ import kotlin.coroutines.EmptyCoroutineContext
 @Service
 class AccountQueryServiceImpl(
     private val accountRepository: AccountRepository,
+    private val accountProjectionRepository: AccountProjectionRepository
 ) : AccountQueryService {
 
     override suspend fun handle(query: GetAccountByIdQuery): Account = serviceScope {
         accountRepository.getAccountById(AccountId(query.id)) ?: throw AccountNotFoundException(query.id.toString())
+    }
+
+    override suspend fun handle(query: GetAccountByEmailQuery): Account = serviceScope {
+        accountProjectionRepository.getAccountByEmail(query.email) ?: throw AccountNotFoundException(query.email)
     }
 
 
@@ -30,6 +37,6 @@ class AccountQueryServiceImpl(
     ): T = block(scope + context)
 
     private companion object {
-        private val log = KotlinLogging.logger {  }
+        private val log = KotlinLogging.logger { }
     }
 }

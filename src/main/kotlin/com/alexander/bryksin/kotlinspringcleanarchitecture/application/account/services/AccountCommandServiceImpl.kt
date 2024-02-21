@@ -51,7 +51,8 @@ class AccountCommandServiceImpl(
         val (account, event) = tx.executeAndAwait {
             val foundAccount = getAccountById(command.accountId)
             val account = accountRepository.updateAccount(foundAccount.updateStatus(command.status))
-            val event = outboxRepository.insert(account.toStatusChangedEvent().toOutboxEvent(serializer))
+            val event = account.toStatusChangedEvent().toOutboxEvent(serializer)
+            outboxRepository.insert(event)
             account to event
         }
 
@@ -63,7 +64,8 @@ class AccountCommandServiceImpl(
         val (account, event) = tx.executeAndAwait {
             val foundAccount = getAccountById(command.accountId)
             val account = accountRepository.updateAccount(foundAccount.changeContactInfo(command.contactInfo))
-            val event = outboxRepository.insert(account.toContactInfoChangedEvent().toOutboxEvent(serializer))
+            val event = account.toContactInfoChangedEvent().toOutboxEvent(serializer)
+            outboxRepository.insert(event)
             account to event
         }
 
@@ -105,7 +107,8 @@ class AccountCommandServiceImpl(
         val (account, event) = tx.executeAndAwait {
             val foundAccount = getAccountById(command.accountId)
             val account = accountRepository.updateAccount(foundAccount.changePersonalInfo(command.personalInfo))
-            val event = outboxRepository.insert(account.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer))
+            val event = account.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer)
+            outboxRepository.insert(event)
             account to event
         }
 
@@ -148,8 +151,6 @@ class AccountCommandServiceImpl(
 
     private companion object {
         private val log = KotlinLogging.logger { }
-
-
     }
 }
 

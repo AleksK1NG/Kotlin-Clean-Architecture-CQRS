@@ -22,7 +22,7 @@ class AccountRepositoryImpl(
 
     override suspend fun saveAccount(account: Account): Account = repositoryScope {
         dbClient.sql(INSERT_ACCOUNT_QUERY.trimMargin())
-            .bindValues(account.withVersion(1).toPostgresEntityMap())
+            .bindValues(account.withVersion(FIRST_VERSION).toPostgresEntityMap())
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -39,7 +39,7 @@ class AccountRepositoryImpl(
             .rowsUpdated()
             .awaitSingle()
 
-        if (rowsUpdated == 0L) {
+        if (rowsUpdated == NO_ROWS_UPDATED) {
             log.warn { "error optimistic lock while updating id: ${account.accountId} version: ${account.version}" }
             throw NoRowsUpdatedException(account.accountId, account.version)
         }
@@ -64,6 +64,8 @@ class AccountRepositoryImpl(
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private const val FIRST_VERSION = 1L
+        private const val NO_ROWS_UPDATED = 0L
     }
 }
 
