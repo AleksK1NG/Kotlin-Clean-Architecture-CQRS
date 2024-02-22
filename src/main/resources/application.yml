@@ -61,6 +61,8 @@ schedulers:
     fixedRate: 1000
     batchSize: 10
 
+mongo:
+  mongoURI: mongodb://mongo:mongo@localhost:27017/?maxPoolSize=20&w=majority
 
 topics:
   accountCreated:

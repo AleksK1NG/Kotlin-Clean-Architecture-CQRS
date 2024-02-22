@@ -33,7 +33,7 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, 5)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -50,7 +50,7 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, 5)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -80,6 +80,7 @@ class AccountCreatedEventConsumer(
     private companion object {
         private val log = KotlinLogging.logger { }
         private val unprocessableExceptions = setOf(SerializationException::class.java)
+        private const val DEFAULT_RETRY_COUNT = 3
     }
 }
 

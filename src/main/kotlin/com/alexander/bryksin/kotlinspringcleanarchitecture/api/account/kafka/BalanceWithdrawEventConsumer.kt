@@ -25,7 +25,7 @@ class BalanceWithdrawEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceWithdrawEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceWithdraw.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceWithdraw.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -40,7 +40,7 @@ class BalanceWithdrawEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceWithdrawEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceWithdrawRetry.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceWithdrawRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -49,6 +49,7 @@ class BalanceWithdrawEventConsumer(
 
 
     private companion object {
+        private const val DEFAULT_RETRY_COUNT = 3
         private val log = KotlinLogging.logger { }
     }
 }

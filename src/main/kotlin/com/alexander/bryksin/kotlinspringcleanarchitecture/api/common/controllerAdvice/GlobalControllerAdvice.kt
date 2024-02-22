@@ -22,6 +22,7 @@ class GlobalControllerAdvice {
             ex.message ?: "",
             Instant.now().toString()
         )
+
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .contentType(MediaType.APPLICATION_JSON)
@@ -30,31 +31,39 @@ class GlobalControllerAdvice {
     }
 
     @ExceptionHandler(value = [DuplicateKeyException::class])
-    fun handleDuplicateKeyException(ex: DuplicateKeyException, request: ServerHttpRequest): ResponseEntity<ErrorHttpResponse> {
+    fun handleDuplicateKeyException(
+        ex: DuplicateKeyException,
+        request: ServerHttpRequest
+    ): ResponseEntity<ErrorHttpResponse> {
         val errorHttpResponse = ErrorHttpResponse(
             HttpStatus.BAD_REQUEST.value(),
             ex.message ?: "",
             Instant.now().toString()
         )
+
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
-            .also { log.error { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
+            .also { log.warn { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
     }
 
     @ExceptionHandler(value = [AccountNotFoundException::class])
-    fun handleAccountNotFoundException(ex: AccountNotFoundException, request: ServerHttpRequest): ResponseEntity<ErrorHttpResponse> {
+    fun handleAccountNotFoundException(
+        ex: AccountNotFoundException,
+        request: ServerHttpRequest
+    ): ResponseEntity<ErrorHttpResponse> {
         val errorHttpResponse = ErrorHttpResponse(
             HttpStatus.NOT_FOUND.value(),
             ex.message ?: "",
             Instant.now().toString()
         )
+
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .contentType(MediaType.APPLICATION_JSON)
             .body(errorHttpResponse)
-            .also { log.error { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
+            .also { log.warn { "(GlobalControllerAdvice) ${ex::class.java.name}: ${ex.message}" } }
     }
 
     private companion object {

@@ -25,7 +25,7 @@ class BalanceDepositedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceDepositedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceDeposited.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceDeposited.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -40,7 +40,7 @@ class BalanceDepositedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceDepositedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceDepositedRetry.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountBalanceDepositedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -51,5 +51,6 @@ class BalanceDepositedEventConsumer(
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private const val DEFAULT_RETRY_COUNT = 3
     }
 }

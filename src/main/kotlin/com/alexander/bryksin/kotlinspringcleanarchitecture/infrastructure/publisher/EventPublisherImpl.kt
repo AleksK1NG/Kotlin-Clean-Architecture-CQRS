@@ -21,7 +21,7 @@ class EventPublisherImpl(
         try {
             val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, event.data)
             headers.forEach { (key, value) -> msg.headers().add(key, value) }
-            kafkaTemplate.send(msg).await().also { log.info { "Published outbox event: $it" } }
+            kafkaTemplate.send(msg).await().also { log.info { "published outbox event: $it" } }
         } catch (e: Exception) {
             log.error { "error while publishing event: ${e.message}" }
             throw e
@@ -29,7 +29,7 @@ class EventPublisherImpl(
     }
 
     override suspend fun publish(events: List<OutboxEvent>) {
-        log.info { "Publishing outbox events: $events" }
+        events.forEach { publish(it) }
     }
 
     override suspend fun publish(topic: String, data: Any, headers: Map<String, ByteArray>) {
@@ -48,7 +48,6 @@ class EventPublisherImpl(
             throw e
         }
     }
-
 
     private companion object {
         private val log = KotlinLogging.logger { }

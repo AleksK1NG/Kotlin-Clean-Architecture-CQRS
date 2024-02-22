@@ -1,5 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.info
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.PersonalInfoUpdatedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
@@ -25,11 +26,11 @@ class PersonalInfoUpdatedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountInfoUpdated.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountInfoUpdated.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        log.info { "consumerRecord successfully processed: ${record.info(withValue = true)}" }
     }
 
 
@@ -41,15 +42,16 @@ class PersonalInfoUpdatedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountInfoUpdatedRetry.name, 3)
+        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountInfoUpdatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        log.info { "consumerRecord successfully processed: ${record.info(withValue = true)}" }
     }
 
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private const val DEFAULT_RETRY_COUNT = 3
     }
 }

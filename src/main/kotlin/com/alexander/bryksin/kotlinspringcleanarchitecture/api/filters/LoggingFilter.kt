@@ -16,7 +16,7 @@ class LoggingFilter : WebFilter {
         val startTime = System.currentTimeMillis()
 
         return chain.filter(exchange)
-            .doOnSuccess {
+            .doFinally {
                 if (!exchange.request.path.value().contains(ACTUATOR)) {
                     val method = exchange.request.method.name().uppercase()
                     val path = exchange.request.path.value()
