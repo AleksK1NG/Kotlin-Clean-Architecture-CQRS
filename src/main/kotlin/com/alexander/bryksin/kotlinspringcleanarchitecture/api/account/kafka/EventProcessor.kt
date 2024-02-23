@@ -20,8 +20,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-typealias ErrorHandler <T> = suspend (Throwable, Acknowledgment, ConsumerRecord<String, ByteArray>, Class<T>) -> Unit
-
 typealias OnErrorHandler <T> = suspend (ErrorHandlerParams<T>) -> Unit
 
 
@@ -87,23 +85,19 @@ class EventProcessor(
     ): OnErrorHandler<T> =
         {
             handleRetry(
-                err = it.error,
-                ack = it.ack,
-                consumerRecord = it.consumerRecord,
+                errorHandlerParams = it,
                 maxRetryCount = maxRetryCount,
                 retryTopic = retryTopic,
-                deserializationClazz = it.deserializationClazz
             )
         }
 
     private suspend fun <T : Any> handleRetry(
-        err: Throwable,
-        ack: Acknowledgment,
-        consumerRecord: ConsumerRecord<String, ByteArray>,
+        errorHandlerParams: ErrorHandlerParams<T>,
         maxRetryCount: Int,
         retryTopic: String,
-        deserializationClazz: Class<T>
     ) {
+        val (err, ack, consumerRecord, deserializationClazz) = errorHandlerParams
+
         val event = runCatching<T> { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
             .onFailure { log.error { "serialization error: ${it.message}" } }
             .onSuccess { log.info { "serialized message: $it" } }
@@ -119,11 +113,14 @@ class EventProcessor(
         log.info { "merged headers retry: ${String(mergedHeaders[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
 
         if (retryCount >= maxRetryCount) {
+            val dlqHeaders = retryHeadersMap.toMutableMap()
+            dlqHeaders[DLQ_ERROR_MESSAGE] = err.message?.toByteArray(Charsets.UTF_8) ?: byteArrayOf()
+
             publisher.publishBytes(
                 topic = kafkaTopics.deadLetterQueue.name,
                 key = consumerRecord.key(),
                 data = consumerRecord.value(),
-                headers = retryHeadersMap
+                headers = dlqHeaders
             )
             logDlqMsg(retryCount, maxRetryCount, consumerRecord)
             ack.acknowledge()
@@ -165,6 +162,7 @@ class EventProcessor(
         )
         const val KAFKA_HEADERS_RETRY = "X-Kafka-Retry"
         private const val DEFAULT_RETRY_COUNT = 3
+        private const val DLQ_ERROR_MESSAGE = "dlqErrorMessage"
     }
 }
 
