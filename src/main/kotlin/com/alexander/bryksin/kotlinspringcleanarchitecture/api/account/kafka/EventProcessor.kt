@@ -22,6 +22,16 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 typealias ErrorHandler <T> = suspend (Throwable, Acknowledgment, ConsumerRecord<String, ByteArray>, Class<T>) -> Unit
 
+typealias OnErrorHandler <T> = suspend (ErrorHandlerParams<T>) -> Unit
+
+
+data class ErrorHandlerParams<T>(
+    val error: Throwable,
+    val ack: Acknowledgment,
+    val consumerRecord: ConsumerRecord<String, ByteArray>,
+    val deserializationClazz: Class<T>
+)
+
 @Component
 class EventProcessor(
     private val serializer: Serializer,
@@ -36,7 +46,7 @@ class EventProcessor(
         unprocessableExceptions: Set<Class<*>> = setOf(),
         retryTopic: String? = null,
         context: CoroutineContext = EmptyCoroutineContext,
-        onError: ErrorHandler<T> = { err, _, _, _ -> log.error { err.message } },
+        onError: OnErrorHandler<T> = { log.error { it.error.message } },
         onSuccess: suspend (T) -> Unit
     ) = runBlocking(processContext(context)) {
         try {
@@ -60,26 +70,33 @@ class EventProcessor(
                 return@runBlocking
             }
 
-            onError(e, ack, consumerRecord, deserializationClazz)
+            val errorHandlerParams = ErrorHandlerParams(
+                error = e,
+                ack = ack,
+                consumerRecord = consumerRecord,
+                deserializationClazz = deserializationClazz
+            )
+
+            onError(errorHandlerParams)
         }
     }
 
-    fun <T> defaultErrorRetryHandler(
+    fun <T : Any> defaultErrorRetryHandler(
         retryTopic: String,
-        maxRetryCount: Int = DEFAULT_RETRY_COUNT ,
-    ): ErrorHandler<T> =
-        { err, ack, consumerRecord, clazz ->
+        maxRetryCount: Int = DEFAULT_RETRY_COUNT,
+    ): OnErrorHandler<T> =
+        {
             handleRetry(
-                err = err,
-                ack = ack,
-                consumerRecord = consumerRecord,
+                err = it.error,
+                ack = it.ack,
+                consumerRecord = it.consumerRecord,
                 maxRetryCount = maxRetryCount,
                 retryTopic = retryTopic,
-                deserializationClazz = clazz
+                deserializationClazz = it.deserializationClazz
             )
         }
 
-    private suspend fun <T> handleRetry(
+    private suspend fun <T : Any> handleRetry(
         err: Throwable,
         ack: Acknowledgment,
         consumerRecord: ConsumerRecord<String, ByteArray>,
@@ -87,25 +104,28 @@ class EventProcessor(
         retryTopic: String,
         deserializationClazz: Class<T>
     ) {
-        runCatching { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
+        val event = runCatching<T> { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
             .onFailure { log.error { "serialization error: ${it.message}" } }
             .onSuccess { log.info { "serialized message: $it" } }
+            .getOrThrow()
 
         log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
 
         val retryCount = consumerRecord.getRetriesCount().getOrDefault(0)
         val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
+        log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
+
         val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
+        log.info { "merged headers retry: ${String(mergedHeaders[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
 
         if (retryCount >= maxRetryCount) {
-            publisher.publish(
+            publisher.publishBytes(
                 topic = kafkaTopics.deadLetterQueue.name,
                 key = consumerRecord.key(),
                 data = consumerRecord.value(),
-                headers = mergedHeaders
+                headers = retryHeadersMap
             )
             logDlqMsg(retryCount, maxRetryCount, consumerRecord)
-
             ack.acknowledge()
             return
         }
@@ -113,11 +133,11 @@ class EventProcessor(
         publisher.publish(
             topic = retryTopic,
             key = consumerRecord.key(),
-            data = consumerRecord.value(),
+            data = event,
             headers = mergedHeaders
         )
 
-        log.warn { "published retry topic: $retryTopic" }
+        log.warn { "published retry topic: $retryTopic, event: $event" }
         ack.acknowledge()
     }
 

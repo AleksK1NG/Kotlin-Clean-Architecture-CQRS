@@ -3,6 +3,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAllAccountsQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountCommandService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
@@ -95,6 +96,16 @@ class AccountController(
     @GetMapping(path = ["/email/{email}"])
     suspend fun getAccountByEmail(@PathVariable email: String) = controllerScope {
         accountQueryService.handle(GetAccountByEmailQuery(email))
+            .let { ResponseEntity.status(HttpStatus.OK).body(it) }
+    }
+
+    @Operation(method = "getAllAccounts", operationId = "getAccountByEmail", description = "Get all accounts")
+    @GetMapping(path = ["/all"])
+    suspend fun getAllAccounts(
+        @RequestParam(name = "page", required = false, defaultValue = "0") page: Int,
+        @RequestParam(name = "size", required = false, defaultValue = "10") size: Int
+    ) = controllerScope {
+        accountQueryService.handle(GetAllAccountsQuery(page = page, size = size))
             .let { ResponseEntity.status(HttpStatus.OK).body(it) }
     }
 

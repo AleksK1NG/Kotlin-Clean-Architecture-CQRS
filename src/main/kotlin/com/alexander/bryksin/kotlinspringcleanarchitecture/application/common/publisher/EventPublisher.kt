@@ -11,4 +11,6 @@ interface EventPublisher {
     suspend fun publish(topic: String, data: Any, headers: Map<String, ByteArray> = mapOf())
 
     suspend fun publish(topic: String, key: String, data: Any, headers: Map<String, ByteArray> = mapOf())
+
+    suspend fun publishBytes(topic: String, key: String, data: ByteArray, headers: Map<String, ByteArray> = mapOf())
 }

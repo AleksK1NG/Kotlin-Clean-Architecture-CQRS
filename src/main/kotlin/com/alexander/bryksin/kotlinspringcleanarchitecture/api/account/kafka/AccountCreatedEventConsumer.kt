@@ -1,9 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.buildRetryCountHeader
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.getRetryCount
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.info
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.mergeHeaders
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
@@ -58,23 +55,23 @@ class AccountCreatedEventConsumer(
     }
 
 
-    private val accountCreatedErrorHandler: ErrorHandler<AccountCreatedEvent> = { err, ack, consumerRecord, clazz ->
-        log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }
-
-        val retryCount = consumerRecord.getRetryCount()
-        val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
-        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
-
-        publisher.publish(
-            topic = kafkaTopics.accountCreatedRetry.name,
-            key = consumerRecord.key(),
-            data = consumerRecord.value(),
-            headers = mergedHeaders
-        )
-
-        log.warn { "published retry topic: ${kafkaTopics.accountCreated.name}" }
-        ack.acknowledge()
-    }
+//    private val accountCreatedErrorHandler: ErrorHandler<AccountCreatedEvent> = { err, ack, consumerRecord, clazz ->
+//        log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }
+//
+//        val retryCount = consumerRecord.getRetryCount()
+//        val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
+//        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
+//
+//        publisher.publish(
+//            topic = kafkaTopics.accountCreatedRetry.name,
+//            key = consumerRecord.key(),
+//            data = consumerRecord.value(),
+//            headers = mergedHeaders
+//        )
+//
+//        log.warn { "published retry topic: ${kafkaTopics.accountCreated.name}" }
+//        ack.acknowledge()
+//    }
 
 
     private companion object {

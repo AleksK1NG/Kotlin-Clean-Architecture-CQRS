@@ -10,7 +10,6 @@ import org.springframework.kafka.core.KafkaAdmin
 class KafkaAdminConfiguration(
     @Value(value = "\${spring.kafka.bootstrap-servers:localhost:9092}")
     private val bootstrapServers: String,
-    private val kafkaTopics: KafkaTopics,
 ) {
 
     @Bean

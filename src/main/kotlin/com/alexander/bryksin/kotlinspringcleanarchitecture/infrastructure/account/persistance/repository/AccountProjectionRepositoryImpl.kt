@@ -14,7 +14,9 @@ import com.mongodb.client.model.ReturnDocument
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Component
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.coroutines.CoroutineContext
@@ -57,6 +59,13 @@ class AccountProjectionRepositoryImpl(
     override suspend fun getAccountByEmail(email: String): Account? = repositoryScope {
         val filter = and(eq("contactInfo.email", email))
         accountsCollection.find(filter).firstOrNull()?.toAccount()
+    }
+
+    override suspend fun getAllAccounts(page: Int, size: Int): Flow<Account> = repositoryScope {
+        accountsCollection.find()
+            .skip(page * size)
+            .limit(size)
+            .map { it.toAccount() }
     }
 
 

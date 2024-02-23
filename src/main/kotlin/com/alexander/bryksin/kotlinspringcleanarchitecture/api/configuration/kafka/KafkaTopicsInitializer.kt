@@ -15,19 +15,18 @@ class KafkaTopicsInitializer(
 
     @PostConstruct
     fun init() {
-        try {
+        kotlin.runCatching {
             kafkaTopics.getTopics()
                 .map { NewTopic(it.name, it.partitions, it.replication.toShort()) }
                 .forEach {
                     kafkaAdmin.createOrModifyTopics(it)
                     log.info { "created or modified topic: $it" }
                 }
-        } catch (e: Exception) {
-            log.error { "error while initializing kafka topics: ${e.message}" }
-            throw e
         }
+            .onSuccess { log.info { "kafka topics created" } }
+            .onFailure { log.error { "error while creating kafka topics: ${it.message}" } }
+            .getOrThrow()
     }
-
 
     private companion object {
         private val log = KotlinLogging.logger { }

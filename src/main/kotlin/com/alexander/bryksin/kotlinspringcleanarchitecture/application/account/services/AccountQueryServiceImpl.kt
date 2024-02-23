@@ -4,10 +4,12 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.p
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAllAccountsQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.coroutines.CoroutineContext
@@ -28,6 +30,9 @@ class AccountQueryServiceImpl(
         accountProjectionRepository.getAccountByEmail(query.email) ?: throw AccountNotFoundException(query.email)
     }
 
+    override suspend fun handle(query: GetAllAccountsQuery): Flow<Account> = serviceScope {
+        accountProjectionRepository.getAllAccounts(page = query.page, size = query.size)
+    }
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
 

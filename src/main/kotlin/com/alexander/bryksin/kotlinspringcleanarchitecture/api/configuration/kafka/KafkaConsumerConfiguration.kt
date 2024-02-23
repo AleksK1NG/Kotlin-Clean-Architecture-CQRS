@@ -1,6 +1,5 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -42,8 +41,4 @@ class KafkaConsumerConfiguration(
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ByteArrayDeserializer::class.java,
         ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to "false"
     )
-
-    companion object {
-        private val log = KotlinLogging.logger { }
-    }
 }
