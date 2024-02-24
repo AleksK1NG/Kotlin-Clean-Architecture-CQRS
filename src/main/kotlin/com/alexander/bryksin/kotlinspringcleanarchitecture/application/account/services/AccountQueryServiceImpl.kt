@@ -1,5 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services
 
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.models.AccountsList
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
@@ -9,7 +10,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import javax.security.auth.login.AccountNotFoundException
 import kotlin.coroutines.CoroutineContext
@@ -23,14 +23,16 @@ class AccountQueryServiceImpl(
 ) : AccountQueryService {
 
     override suspend fun handle(query: GetAccountByIdQuery): Account = serviceScope {
-        accountRepository.getAccountById(AccountId(query.id)) ?: throw AccountNotFoundException(query.id.toString())
+        accountRepository.getAccountById(AccountId(query.id))
+            ?: throw AccountNotFoundException(query.id.toString())
     }
 
     override suspend fun handle(query: GetAccountByEmailQuery): Account = serviceScope {
-        accountProjectionRepository.getAccountByEmail(query.email) ?: throw AccountNotFoundException(query.email)
+        accountProjectionRepository.getAccountByEmail(query.email)
+            ?: throw AccountNotFoundException(query.email)
     }
 
-    override suspend fun handle(query: GetAllAccountsQuery): Flow<Account> = serviceScope {
+    override suspend fun handle(query: GetAllAccountsQuery): AccountsList = serviceScope {
         accountProjectionRepository.getAllAccounts(page = query.page, size = query.size)
     }
 
@@ -38,7 +40,7 @@ class AccountQueryServiceImpl(
 
     private suspend fun <T> serviceScope(
         context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend (CoroutineScope) -> T
+        block: suspend CoroutineScope.() -> T
     ): T = block(scope + context)
 
     private companion object {

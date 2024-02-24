@@ -7,7 +7,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import java.time.Instant
 
 class Account(
-    var accountId: AccountId? = null,
+    var accountId: AccountId = AccountId(),
 ) {
     var contactInfo: ContactInfo = ContactInfo()
         private set
@@ -28,7 +28,7 @@ class Account(
 
 
     constructor(
-        accountId: AccountId? = null,
+        accountId: AccountId = AccountId(),
         contactInfo: ContactInfo = ContactInfo(),
         personalInfo: PersonalInfo = PersonalInfo(),
         address: Address = Address(),
@@ -55,7 +55,7 @@ class Account(
             newBalance.balanceCurrency
         )
 
-        if (newBalance.amount < 0) throw InvalidAmountException(accountId?.string() ?: "", newBalance.amount)
+        if (newBalance.amount < 0) throw InvalidAmountException(accountId.string(), newBalance.amount)
         balance = balance.copy(amount = (balance.amount + newBalance.amount))
         updatedAt = Instant.now()
         return this
@@ -68,7 +68,7 @@ class Account(
         )
 
         val newAmount = (balance.amount - newBalance.amount)
-        if ((newAmount) < 0) throw InvalidAmountException(accountId?.string() ?: "", newBalance.amount)
+        if ((newAmount) < 0) throw InvalidAmountException(accountId.string(), newBalance.amount)
         balance = balance.copy(amount = newAmount)
         updatedAt = Instant.now()
         return this
@@ -129,7 +129,6 @@ class Account(
     }
 
     companion object {}
-
 
 
 }

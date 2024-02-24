@@ -61,28 +61,10 @@ class AccountEventHandlerServiceImpl(
         eventVersion: Long,
         block: suspend (Account) -> Account
     ): Account {
-        try {
-            val foundAccount = findAndValidateVersion(accountId, eventVersion)
-            val accountToUpdate = block(foundAccount)
-            return accountProjectionRepository.updateAccount(accountToUpdate)
-                .also { log.info { "mongo repository updated account: $it" } }
-        } catch (e: Exception) {
-            log.error { e.message }
-            throw e
-        }
-    }
-
-    private fun validateVersion(account: Account, eventVersion: Long) {
-        when {
-            eventVersion < account.version + 1 ->
-                throw LowerEventVersionException(account.accountId, account.version, eventVersion)
-
-            eventVersion == account.version ->
-                throw SameEventVersionException(account.accountId, account.version, eventVersion)
-
-            eventVersion > account.version + 1 ->
-                throw UpperEventVersionException(account.accountId, account.version, eventVersion)
-        }
+        val foundAccount = findAndValidateVersion(accountId, eventVersion)
+        val accountToUpdate = block(foundAccount)
+        return accountProjectionRepository.updateAccount(accountToUpdate)
+            .also { log.info { "mongo repository updated account: $it" } }
     }
 
     private suspend fun findAndValidateVersion(accountId: AccountId, eventVersion: Long): Account {
@@ -97,10 +79,25 @@ class AccountEventHandlerServiceImpl(
 
     private suspend fun <T> serviceScope(
         context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend (CoroutineScope) -> T
+        block: suspend CoroutineScope.() -> T
     ): T = block(scope + context)
 
     private companion object {
         private val log = KotlinLogging.logger { }
     }
 }
+
+
+internal fun validateVersion(account: Account, eventVersion: Long) {
+    when {
+        eventVersion < account.version + 1 ->
+            throw LowerEventVersionException(account.accountId, account.version, eventVersion)
+
+        eventVersion == account.version ->
+            throw SameEventVersionException(account.accountId, account.version, eventVersion)
+
+        eventVersion > account.version + 1 ->
+            throw UpperEventVersionException(account.accountId, account.version, eventVersion)
+    }
+}
+

@@ -11,7 +11,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.plus
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -110,11 +113,11 @@ class AccountController(
     }
 
 
-    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
+    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name))
 
     private suspend fun <T> controllerScope(
         context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend (CoroutineScope) -> T
+        block: suspend CoroutineScope.() -> T
     ): T = block(scope + context)
 
     private companion object {

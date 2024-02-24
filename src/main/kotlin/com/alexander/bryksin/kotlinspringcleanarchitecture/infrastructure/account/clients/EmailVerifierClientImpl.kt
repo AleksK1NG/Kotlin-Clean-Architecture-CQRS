@@ -1,20 +1,15 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.clients
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.EmailVerifierClient
-import io.github.oshai.kotlinlogging.KotlinLogging
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.EmailVerificationException
 import kotlinx.coroutines.delay
 import org.springframework.stereotype.Component
 
 @Component
 class EmailVerifierClientImpl : EmailVerifierClient {
 
-    override suspend fun verifyEmail(email: String): Boolean {
+    override suspend fun verifyEmail(email: String) {
         delay(300)
-        log.info { "email verified: $email" }
-        return email.isBlank()
-    }
-
-    private companion object {
-        private val log = KotlinLogging.logger { }
+        if (email.isBlank()) throw EmailVerificationException(email)
     }
 }

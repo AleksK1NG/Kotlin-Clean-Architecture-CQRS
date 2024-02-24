@@ -3,6 +3,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.publi
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.utils.runSuspendCatching
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.future.await
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -16,16 +17,29 @@ class EventPublisherImpl(
     private val serializer: Serializer
 ) : EventPublisher {
 
-    override suspend fun publish(event: OutboxEvent, headers: Map<String, ByteArray>) {
-        try {
+
+    override suspend fun publish(event: OutboxEvent, headers: Map<String, ByteArray>): Unit =
+        runSuspendCatching {
             val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, event.data)
             headers.forEach { (key, value) -> msg.headers().add(key, value) }
-            kafkaTemplate.send(msg).await().also { log.info { "published outbox event: $it" } }
-        } catch (e: Exception) {
-            log.error { "error while publishing event: ${e.message}" }
-            throw e
+            kafkaTemplate.send(msg).await()
         }
-    }
+            .onSuccess { log.info { "published outbox event: $it" } }
+            .onFailure { log.error { "error while publishing event: ${it.message}" } }
+            .map { }
+            .getOrThrow()
+
+
+//    override suspend fun publish(event: OutboxEvent, headers: Map<String, ByteArray>) {
+//        try {
+//            val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, event.data)
+//            headers.forEach { (key, value) -> msg.headers().add(key, value) }
+//            kafkaTemplate.send(msg).await().also { log.info { "published outbox event: $it" } }
+//        } catch (e: Exception) {
+//            log.error { "error while publishing event: ${e.message}" }
+//            throw e
+//        }
+//    }
 
     override suspend fun publish(events: List<OutboxEvent>) {
         events.forEach { publish(it) }

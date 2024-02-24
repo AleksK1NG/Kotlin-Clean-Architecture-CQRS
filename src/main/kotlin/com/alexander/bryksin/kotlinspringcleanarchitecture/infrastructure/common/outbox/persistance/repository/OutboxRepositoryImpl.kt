@@ -84,7 +84,7 @@ class OutboxRepositoryImpl(
 
     private suspend fun <T> repositoryScope(
         context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend (CoroutineScope) -> T
+        block: suspend CoroutineScope.() -> T
     ): T = block(scope + context)
 
     private companion object {

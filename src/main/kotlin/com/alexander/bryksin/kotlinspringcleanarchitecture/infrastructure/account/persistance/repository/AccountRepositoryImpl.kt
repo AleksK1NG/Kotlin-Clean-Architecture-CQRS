@@ -9,6 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.awaitSingleOrNull
+import org.springframework.r2dbc.core.bind
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext

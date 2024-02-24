@@ -53,7 +53,7 @@ fun AccountEntity.toAccount(): Account {
     val accountId = if (this.accountId != null) AccountId(this.accountId) else null
 
     return Account(
-        accountId = accountId,
+        accountId = accountId ?: AccountId(),
         contactInfo = ContactInfo(
             email = this.email,
             phone = this.phone,

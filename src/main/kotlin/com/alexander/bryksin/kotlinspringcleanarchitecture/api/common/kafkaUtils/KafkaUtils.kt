@@ -1,6 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.EventProcessor
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka.EventProcessor
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import org.apache.kafka.clients.consumer.ConsumerRecord

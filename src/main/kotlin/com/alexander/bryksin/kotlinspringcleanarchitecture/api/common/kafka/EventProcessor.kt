@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
@@ -21,7 +21,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 typealias OnErrorHandler <T> = suspend (ErrorHandlerParams<T>) -> Unit
-
 
 data class ErrorHandlerParams<T>(
     val error: Throwable,
@@ -47,6 +46,7 @@ class EventProcessor(
         onError: OnErrorHandler<T> = { log.error { it.error.message } },
         onSuccess: suspend (T) -> Unit
     ) = runBlocking(processContext(context)) {
+
         try {
             log.info { consumerRecord.info() }
             val event = serializer.deserialize(consumerRecord.value(), deserializationClazz)
@@ -97,20 +97,16 @@ class EventProcessor(
         retryTopic: String,
     ) {
         val (err, ack, consumerRecord, deserializationClazz) = errorHandlerParams
+        log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
 
         val event = runCatching<T> { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
             .onFailure { log.error { "serialization error: ${it.message}" } }
             .onSuccess { log.info { "serialized message: $it" } }
             .getOrThrow()
 
-        log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
-
         val retryCount = consumerRecord.getRetriesCount().getOrDefault(0)
         val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
         log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
-
-        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
-        log.info { "merged headers retry: ${String(mergedHeaders[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
 
         if (retryCount >= maxRetryCount) {
             val dlqHeaders = retryHeadersMap.toMutableMap()
@@ -127,6 +123,9 @@ class EventProcessor(
             return
         }
 
+        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
+        log.info { "merged headers retry: ${String(mergedHeaders[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
+
         publisher.publish(
             topic = retryTopic,
             key = consumerRecord.key(),
@@ -138,7 +137,7 @@ class EventProcessor(
         ack.acknowledge()
     }
 
-    fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
+    private fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
         Job() + CoroutineName(this::class.java.name) + context
 
     private fun logDlqMsg(

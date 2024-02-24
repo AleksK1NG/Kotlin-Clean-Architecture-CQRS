@@ -22,6 +22,7 @@ class LoggingFilter : WebFilter {
                     val path = exchange.request.path.value()
                     val statusCode = exchange.response.statusCode?.value()
                     val time = (System.currentTimeMillis() - startTime)
+
                     log.info { "$method $path $statusCode ${time}ms" }
                 }
             }
