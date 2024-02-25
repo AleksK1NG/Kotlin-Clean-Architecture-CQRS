@@ -1,7 +1,10 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidAmountException
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidCurrencyException
+import arrow.core.Either
+import arrow.core.raise.either
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.InvalidBalanceError
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.InvalidVersion
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.*
 import java.time.Instant
@@ -49,60 +52,57 @@ class Account(
         this.createdAt = createdAt
     }
 
-    fun depositBalance(newBalance: Balance): Account {
-        if (balance.balanceCurrency != newBalance.balanceCurrency) throw InvalidCurrencyException(
-            balance.balanceCurrency,
-            newBalance.balanceCurrency
-        )
+    fun depositBalance(newBalance: Balance): Either<AppError, Account> = either {
+        if (balance.balanceCurrency != newBalance.balanceCurrency) raise(InvalidBalanceError("invalid balance: $newBalance"))
+        if (newBalance.amount < 0) raise(InvalidBalanceError("invalid balance: $newBalance"))
 
-        if (newBalance.amount < 0) throw InvalidAmountException(accountId.string(), newBalance.amount)
         balance = balance.copy(amount = (balance.amount + newBalance.amount))
         updatedAt = Instant.now()
-        return this
+
+        this@Account
     }
 
-    fun withdrawBalance(newBalance: Balance): Account {
-        if (balance.balanceCurrency != newBalance.balanceCurrency) throw InvalidCurrencyException(
-            balance.balanceCurrency,
-            newBalance.balanceCurrency
-        )
+    fun withdrawBalance(newBalance: Balance): Either<AppError, Account> = either {
+        if (balance.balanceCurrency != newBalance.balanceCurrency) raise(InvalidBalanceError("invalid balance: $newBalance"))
 
         val newAmount = (balance.amount - newBalance.amount)
-        if ((newAmount) < 0) throw InvalidAmountException(accountId.string(), newBalance.amount)
+        if ((newAmount) < 0) raise(InvalidBalanceError("invalid balance: $newBalance"))
+
         balance = balance.copy(amount = newAmount)
         updatedAt = Instant.now()
-        return this
+
+        this@Account
     }
 
-    fun updateStatus(newStatus: AccountStatus): Account {
+    fun updateStatus(newStatus: AccountStatus): Either<AppError, Account> = either {
         status = newStatus
         updatedAt = Instant.now()
-        return this
+        this@Account
     }
 
-    fun changeContactInfo(newContactInfo: ContactInfo): Account {
+    fun changeContactInfo(newContactInfo: ContactInfo): Either<AppError, Account> = either {
         contactInfo = newContactInfo
         updatedAt = Instant.now()
-        return this
+        this@Account
     }
 
-    fun changeAddress(newAddress: Address): Account {
+    fun changeAddress(newAddress: Address): Either<AppError, Account> = either {
         address = newAddress
         updatedAt = Instant.now()
-        return this
+        this@Account
     }
 
-    fun changePersonalInfo(newPersonalInfo: PersonalInfo): Account {
+    fun changePersonalInfo(newPersonalInfo: PersonalInfo): Either<AppError, Account> = either {
         personalInfo = newPersonalInfo
         updatedAt = Instant.now()
-        return this
+        this@Account
     }
 
-    fun incVersion(amount: Long = 1): Account {
-        if (amount < 1) throw InvalidVersionException(accountId, amount)
+    fun incVersion(amount: Long = 1): Either<AppError, Account> = either {
+        if (amount < 1) raise(InvalidVersion("invalid version: $amount"))
         version += amount
         updatedAt = Instant.now()
-        return this
+        this@Account
     }
 
     fun withVersion(amount: Long = 1): Account {
@@ -112,11 +112,11 @@ class Account(
         return this
     }
 
-    fun decVersion(amount: Long = 1): Account {
-        if (amount < 1) throw InvalidVersionException(accountId, amount)
+    fun decVersion(amount: Long = 1): Either<AppError, Account> = either {
+        if (amount < 1)raise(InvalidVersion("invalid version: $amount"))
         version -= amount
         updatedAt = Instant.now()
-        return this
+        this@Account
     }
 
     fun withUpdatedAt(newValue: Instant): Account {

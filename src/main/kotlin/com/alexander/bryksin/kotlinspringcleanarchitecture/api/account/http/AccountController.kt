@@ -1,12 +1,15 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http
 
+import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAllAccountsQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountCommandService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -14,13 +17,10 @@ import jakarta.validation.Valid
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.plus
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Tag(name = "Accounts", description = "Account domain REST endpoints")
@@ -33,18 +33,21 @@ class AccountController(
 
     @Operation(method = "createAccount", operationId = "createAccount", description = "Create new Account")
     @PostMapping
-    suspend fun createAccount(@Valid @RequestBody request: CreateAccountRequest) = controllerScope {
-        accountCommandService.handle(request.toCommand())
-            .let {
-                ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse(status = HttpStatus.CREATED, data = it))
-            }
-    }
+    suspend fun createAccount(@Valid @RequestBody request: CreateAccountRequest): Either<AppError, ResponseEntity<*>> =
+        eitherScope {
+            accountCommandService.handle(request.toCommand()).fold(
+                ifLeft = { mapErrorToResponse(it) },
+                ifRight = { createdResponse(it) }
+            )
+        }
 
     @Operation(method = "getAccountById", operationId = "getAccountById", description = "Get account by id")
     @GetMapping(path = ["{id}"])
-    suspend fun getAccountById(@PathVariable id: UUID) = controllerScope {
-        accountQueryService.handle(GetAccountByIdQuery(id))
-            .let { ResponseEntity.status(HttpStatus.OK).body(it) }
+    suspend fun getAccountById(@PathVariable id: UUID): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountQueryService.handle(GetAccountByIdQuery(id)).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { okResponse(it) }
+        )
     }
 
     @Operation(method = "depositBalance", operationId = "depositBalance", description = "Deposit balance")
@@ -52,9 +55,11 @@ class AccountController(
     suspend fun depositBalance(
         @PathVariable id: UUID,
         @Valid @RequestBody request: DepositBalanceRequest
-    ) = controllerScope {
-        accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
+    ): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountCommandService.handle(request.toCommand(AccountId(id))).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { OK_RESPONSE }
+        )
     }
 
     @Operation(method = "withdrawBalance", operationId = "withdrawBalance", description = "Withdraw balance")
@@ -62,9 +67,11 @@ class AccountController(
     suspend fun withdrawBalance(
         @PathVariable id: UUID,
         @Valid @RequestBody request: WithdrawBalanceRequest
-    ) = controllerScope {
-        accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
+    ): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountCommandService.handle(request.toCommand(AccountId(id))).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { OK_RESPONSE }
+        )
     }
 
     @Operation(method = "updateStatus", operationId = "updateStatus", description = "Update account status")
@@ -72,9 +79,11 @@ class AccountController(
     suspend fun updateStatus(
         @PathVariable id: UUID,
         @Valid @RequestBody request: ChangeAccountStatusRequest
-    ) = controllerScope {
-        accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
+    ): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountCommandService.handle(request.toCommand(AccountId(id))).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { OK_RESPONSE }
+        )
     }
 
     @Operation(method = "updatePersonalInfo", operationId = "updatePersonalInfo", description = "Update account info")
@@ -82,9 +91,11 @@ class AccountController(
     suspend fun updatePersonalInfo(
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdatePersonalInfoRequest
-    ) = controllerScope {
-        accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
+    ): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountCommandService.handle(request.toCommand(AccountId(id))).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { OK_RESPONSE }
+        )
     }
 
     @Operation(method = "changeContactInfo", operationId = "changeContactInfo", description = "Update account contacts")
@@ -92,16 +103,20 @@ class AccountController(
     suspend fun changeContactInfo(
         @PathVariable id: UUID,
         @Valid @RequestBody request: ChangeContactInfoRequest
-    ) = controllerScope {
-        accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
+    ): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountCommandService.handle(request.toCommand(AccountId(id))).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { OK_RESPONSE }
+        )
     }
 
     @Operation(method = "getAccountByEmail", operationId = "getAccountByEmail", description = "Get account by email")
     @GetMapping(path = ["/email/{email}"])
-    suspend fun getAccountByEmail(@PathVariable email: String) = controllerScope {
-        accountQueryService.handle(GetAccountByEmailQuery(email))
-            .let { ResponseEntity.status(HttpStatus.OK).body(it) }
+    suspend fun getAccountByEmail(@PathVariable email: String): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountQueryService.handle(GetAccountByEmailQuery(email)).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { okResponse(it) }
+        )
     }
 
     @Operation(method = "getAllAccounts", operationId = "getAccountByEmail", description = "Get all accounts")
@@ -109,20 +124,25 @@ class AccountController(
     suspend fun getAllAccounts(
         @RequestParam(name = "page", required = false, defaultValue = "0") page: Int,
         @RequestParam(name = "size", required = false, defaultValue = "10") size: Int
-    ) = controllerScope {
-        accountQueryService.handle(GetAllAccountsQuery(page = page, size = size))
-            .let { ResponseEntity.status(HttpStatus.OK).body(it) }
+    ): Either<AppError, ResponseEntity<*>> = eitherScope {
+        accountQueryService.handle(GetAllAccountsQuery(page = page, size = size)).fold(
+            ifLeft = { mapErrorToResponse(it) },
+            ifRight = { okResponse(it) }
+        )
     }
 
-
+    private val ctx = Job() + CoroutineName(this::class.java.name)
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name))
 
-    private suspend fun <T> controllerScope(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend CoroutineScope.() -> T
-    ): T = block(scope + context)
 
     private companion object {
         private val log = KotlinLogging.logger { }
+        private val OK_RESPONSE = ResponseEntity.status(HttpStatus.OK).body(BaseResponse(status = HttpStatus.OK))
     }
 }
+
+fun <T : Any> createdResponse(data: T) =
+    ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse(status = HttpStatus.CREATED, data = data))
+
+fun <T : Any> okResponse(data: T) =
+    ResponseEntity.status(HttpStatus.OK).body(BaseResponse(status = HttpStatus.OK, data = data))

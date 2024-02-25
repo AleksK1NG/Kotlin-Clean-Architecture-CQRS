@@ -1,9 +1,13 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.repository
 
+import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.models.AccountsList
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AccountNotFoundError
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.AccountDocument
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.toAccount
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.toBsonUpdate
@@ -20,9 +24,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Component
-import javax.security.auth.login.AccountNotFoundException
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Component
@@ -33,37 +34,39 @@ class AccountProjectionRepositoryImpl(
     private val accountsDB = mongoClient.getDatabase(ACCOUNTS_DB)
     private val accountsCollection = accountsDB.getCollection<AccountDocument>(ACCOUNTS_COLLECTION)
 
-    override suspend fun createAccount(account: Account): Account = repositoryScope {
+    override suspend fun createAccount(account: Account): Either<AppError, Account> = eitherScope {
         val insertOneResult = accountsCollection.insertOne(account.toDocument())
         log.info { "account insertOneResult: ${insertOneResult}, account: $account" }
         account
     }
 
-    override suspend fun updateAccount(account: Account): Account = repositoryScope {
+    override suspend fun updateAccount(account: Account): Either<AppError, Account> = eitherScope {
         val filter = and(eq(ACCOUNT_ID, account.accountId.string()), eq(VERSION, account.version))
         val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
 
         accountsCollection.findOneAndUpdate(
             filter,
-            account.incVersion().toBsonUpdate(),
+            account.incVersion().bind().toBsonUpdate(),
             options
         )
             ?.toAccount()
-            ?: throw AccountNotFoundException(account.accountId.string())
+            ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
 
-    override suspend fun getAccountById(id: AccountId): Account? = repositoryScope {
+    override suspend fun getAccountById(id: AccountId): Either<AppError, Account> = eitherScope {
         accountsCollection.find<AccountDocument>(eq(ACCOUNT_ID, id.string()))
             .firstOrNull()
             ?.toAccount()
+            ?: raise(AccountNotFoundError("account with id: $id not found"))
     }
 
-    override suspend fun getAccountByEmail(email: String): Account? = repositoryScope {
+    override suspend fun getAccountByEmail(email: String): Either<AppError, Account> = eitherScope {
         val filter = and(eq(CONTACT_INFO_EMAIL, email))
         accountsCollection.find(filter).firstOrNull()?.toAccount()
+            ?: raise(AccountNotFoundError("account with email: $email not found"))
     }
 
-    override suspend fun getAllAccounts(page: Int, size: Int): AccountsList = repositoryScope {
+    override suspend fun getAllAccounts(page: Int, size: Int): Either<AppError, AccountsList> = eitherScope {
         val accountsList = async {
             accountsCollection.find()
                 .skip(page * size)
@@ -84,11 +87,6 @@ class AccountProjectionRepositoryImpl(
 
 
     private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
-
-    private suspend fun <T> repositoryScope(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend CoroutineScope.() -> T
-    ): T = block(scope + context)
 
     private companion object {
         private val log = KotlinLogging.logger { }

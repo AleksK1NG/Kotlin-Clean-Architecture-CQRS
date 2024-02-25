@@ -1,9 +1,14 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.common.outbox.persistance.repository
 
+import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -15,8 +20,6 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Component
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Component
 class OutboxRepositoryImpl(
@@ -24,7 +27,7 @@ class OutboxRepositoryImpl(
     private val tx: TransactionalOperator
 ) : OutboxRepository {
 
-    override suspend fun insert(event: OutboxEvent): OutboxEvent = repositoryScope {
+    override suspend fun insert(event: OutboxEvent): Either<AppError, OutboxEvent> = eitherScope(ctx) {
         dbClient.sql(INSERT_OUTBOX_EVENT_QUERY.trimMargin())
             .bindValues(event.toPostgresValuesMap())
             .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
@@ -38,7 +41,7 @@ class OutboxRepositoryImpl(
     override suspend fun deleteWithLock(
         event: OutboxEvent,
         callback: suspend (event: OutboxEvent) -> Unit
-    ): OutboxEvent = repositoryScope {
+    ): Either<AppError, OutboxEvent> = eitherScope {
         tx.executeAndAwait {
             dbClient.sql(GET_OUTBOX_EVENT_BY_ID_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
                 .bindValues(mutableMapOf("eventId" to event.eventId))
@@ -47,7 +50,7 @@ class OutboxRepositoryImpl(
                 .awaitSingleOrNull()
 
             callback(event)
-            deleteOutboxEvent(event)
+            deleteOutboxEvent(event).bind()
             event
         }
     }
@@ -56,7 +59,7 @@ class OutboxRepositoryImpl(
     override suspend fun deleteEventsWithLock(
         batchSize: Int,
         callback: suspend (event: OutboxEvent) -> Unit
-    ): Unit = repositoryScope {
+    ): Either<AppError, Unit> = eitherScope(ctx) {
         tx.executeAndAwait {
             dbClient.sql(GET_OUTBOX_EVENTS_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
                 .bind("limit", batchSize)
@@ -65,13 +68,13 @@ class OutboxRepositoryImpl(
                 .asFlow()
                 .onStart { log.info { "start publishing outbox events batch: $batchSize" } }
                 .onEach { callback(it) }
-                .onEach { event -> deleteOutboxEvent(event) }
+                .onEach { event -> deleteOutboxEvent(event).bind() }
                 .onCompletion { log.info { "completed publishing outbox events batch: $batchSize" } }
                 .collect()
         }
     }
 
-    private suspend fun deleteOutboxEvent(event: OutboxEvent) = repositoryScope {
+    private suspend fun deleteOutboxEvent(event: OutboxEvent): Either<AppError, Long> = eitherScope(ctx) {
         dbClient.sql(DELETE_OUTBOX_EVENT_BY_ID_QUERY)
             .bindValues(mutableMapOf("eventId" to event.eventId))
             .fetch()
@@ -81,12 +84,7 @@ class OutboxRepositoryImpl(
     }
 
 
-    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
-
-    private suspend fun <T> repositoryScope(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend CoroutineScope.() -> T
-    ): T = block(scope + context)
+    private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 
     private companion object {
         private val log = KotlinLogging.logger { }
