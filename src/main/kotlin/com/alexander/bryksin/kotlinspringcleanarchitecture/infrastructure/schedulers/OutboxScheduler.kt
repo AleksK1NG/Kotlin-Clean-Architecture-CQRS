@@ -2,7 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.sched
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.utils.runSuspendCatching
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
@@ -26,10 +26,12 @@ class OutboxScheduler(
         fixedRateString = "\${schedulers.outbox.fixedRate}"
     )
     fun publishOutboxEvents() = runBlocking {
-        runSuspendCatching {
-            outboxRepository.deleteEventsWithLock(batchSize) { publisher.publish(it) }
-        }
-            .onFailure { log.error { "error while publishing outbox events: ${it.message}" } }
+        eitherScope {
+            outboxRepository.deleteEventsWithLock(batchSize) { publisher.publish(it) }.bind()
+        }.fold(
+            ifLeft = { err -> log.error { "error while publishing scheduler outbox events: $err" } },
+            ifRight = { log.info { "outbox scheduler published events" } }
+        )
     }
 
     private companion object {

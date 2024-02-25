@@ -4,9 +4,14 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka.Even
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.info
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.UpperEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.*
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
@@ -50,9 +55,41 @@ class AccountCreatedEventConsumer(
         unprocessableExceptions = unprocessableExceptions,
         onError = eventProcessor.errorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        eitherScope<AppError, Unit> {
+            accountEventHandlerService.on(event).fold(
+                ifLeft = { err ->
+                    when (err) {
+                        is AccountNotFoundError -> TODO()
+                        is EmailValidationError -> TODO()
+                        is GenericAppError -> TODO()
+                        is InvalidBalanceError -> TODO()
+                        is InvalidVersion -> TODO()
+                        is LowerEventVersionError -> throw LowerEventVersionException(
+                            err.id,
+                            err.eventVersion,
+                            err.expectedVersion
+                        )
+
+                        is PaymentValidationError -> TODO()
+                        is SameEventVersionError -> throw SameEventVersionException(
+                            err.id,
+                            err.eventVersion,
+                            err.expectedVersion
+                        )
+
+                        is UpperEventVersionError -> throw UpperEventVersionException(
+                            err.id,
+                            err.eventVersion,
+                            err.expectedVersion
+                        )
+                    }
+                },
+                ifRight = { log.info { "processed" } }
+            )
+
+            ack.acknowledge()
+            log.info { "consumerRecord successfully processed: $record" }
+        }
     }
 
 
