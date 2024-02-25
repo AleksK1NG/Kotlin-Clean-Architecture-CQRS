@@ -1,11 +1,9 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.repository
 
 import arrow.core.Either
-import arrow.core.raise.ensure
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AccountNotFoundError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.GenericAppError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
@@ -35,11 +33,6 @@ class AccountRepositoryImpl(
             .awaitSingle()
             .also { rowsUpdated -> log.info { "saved account rowsUpdated: $rowsUpdated, id: ${account.accountId}" } }
 
-//        ensure(rowsUpdated == NO_ROWS_UPDATED) {
-//            log.warn { "error no rows returns id: ${account.accountId} version: ${account.version}" }
-//            GenericAppError("no rows updated: ${account.accountId} version: ${account.version}")
-//        }
-
         account
     }
 
@@ -51,10 +44,10 @@ class AccountRepositoryImpl(
             .rowsUpdated()
             .awaitSingle()
 
-        ensure(rowsUpdated == NO_ROWS_UPDATED) {
-            log.warn { "error no rows returns id: ${account.accountId} version: ${account.version}" }
-            GenericAppError("no rows updated: ${account.accountId} version: ${account.version}")
-        }
+//        ensure(rowsUpdated == NO_ROWS_UPDATED) {
+//            log.warn { "error no rows returns id: ${account.accountId} version: ${account.version}" }
+//            GenericAppError("no rows updated: ${account.accountId} version: ${account.version}")
+//        }
 
         account.incVersion().bind()
     }
