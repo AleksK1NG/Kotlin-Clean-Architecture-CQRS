@@ -54,7 +54,7 @@ class EventProcessor(
         } catch (e: Exception) {
             log.error { "error while processing event: ${e.message}, data: ${consumerRecord.info()}" }
 
-            if (unprocessableExceptions.contains(e::class.java) || dlqExceptions.contains(e::class.java)) {
+            if (isUnprocessableException(e, unprocessableExceptions)) {
                 log.warn { "publishing to DLQ: ${e.message}, data: ${consumerRecord.info()}" }
 
                 publisher.publish(
@@ -79,7 +79,7 @@ class EventProcessor(
         }
     }
 
-    fun <T : Any> defaultErrorRetryHandler(
+    fun <T : Any> errorRetryHandler(
         retryTopic: String,
         maxRetryCount: Int = DEFAULT_RETRY_COUNT,
     ): OnErrorHandler<T> =
@@ -104,8 +104,8 @@ class EventProcessor(
             .onSuccess { log.info { "serialized message: $it" } }
             .getOrThrow()
 
-        val retryCount = consumerRecord.getRetriesCount().getOrDefault(0)
-        val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
+        val retryCount = consumerRecord.getRetriesCount().getOrDefault(BASE_RETRY_COUNT)
+        val retryHeadersMap = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
         log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
 
         if (retryCount >= maxRetryCount) {
@@ -150,9 +150,10 @@ class EventProcessor(
         }
     }
 
+
     companion object {
         private val log = KotlinLogging.logger { }
-        private val dlqExceptions = setOf(
+        val dlqExceptions = setOf(
             SerializationException::class.java,
             LowerEventVersionException::eventVersion,
             SameEventVersionException::class.java,
@@ -162,6 +163,11 @@ class EventProcessor(
         const val KAFKA_HEADERS_RETRY = "X-Kafka-Retry"
         private const val DEFAULT_RETRY_COUNT = 3
         private const val DLQ_ERROR_MESSAGE = "dlqErrorMessage"
+        private const val BASE_RETRY_COUNT = 0
+        private const val RETRY_COUNT_STEP = 1
     }
 }
 
+internal fun isUnprocessableException(e: Exception, unprocessableExceptions: Set<Class<*>> = setOf()): Boolean {
+    return (unprocessableExceptions.contains(e::class.java) || EventProcessor.dlqExceptions.contains(e::class.java))
+}

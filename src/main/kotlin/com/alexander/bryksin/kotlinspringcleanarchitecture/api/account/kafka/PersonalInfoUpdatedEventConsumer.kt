@@ -27,7 +27,7 @@ class PersonalInfoUpdatedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountInfoUpdated.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountInfoUpdated.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -43,7 +43,7 @@ class PersonalInfoUpdatedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountInfoUpdatedRetry.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountInfoUpdatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()

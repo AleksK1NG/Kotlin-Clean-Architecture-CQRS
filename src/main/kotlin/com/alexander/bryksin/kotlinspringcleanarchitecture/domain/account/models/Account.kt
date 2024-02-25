@@ -129,6 +129,4 @@ class Account(
     }
 
     companion object {}
-
-
 }

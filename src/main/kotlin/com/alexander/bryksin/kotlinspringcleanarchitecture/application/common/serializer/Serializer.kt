@@ -8,3 +8,6 @@ interface Serializer {
 
     fun serializeToString(data: Any): String
 }
+
+
+inline fun <reified T> Serializer.deserializeTo(data: ByteArray) = this.deserialize(data, T::class.java)

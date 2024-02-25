@@ -5,6 +5,9 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.except
 import kotlinx.coroutines.delay
 import org.springframework.stereotype.Component
 
+/*
+Example implementation for demonstration purposes
+ */
 @Component
 class EmailVerifierClientImpl : EmailVerifierClient {
 

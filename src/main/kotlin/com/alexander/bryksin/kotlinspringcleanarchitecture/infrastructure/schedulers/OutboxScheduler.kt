@@ -2,6 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.sched
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.utils.runSuspendCatching
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
@@ -18,18 +19,17 @@ class OutboxScheduler(
 ) {
 
     @Value("\${scheduler.outbox.batchSize}")
-    private var batchSize: Int = 10
+    private var batchSize: Int = 30
 
     @Scheduled(
         initialDelayString = "\${schedulers.outbox.initialDelayMillis}",
         fixedRateString = "\${schedulers.outbox.fixedRate}"
     )
     fun publishOutboxEvents() = runBlocking {
-        try {
+        runSuspendCatching {
             outboxRepository.deleteEventsWithLock(batchSize) { publisher.publish(it) }
-        } catch (e: Exception) {
-            log.error { "error while publishing outbox events: ${e.message}" }
         }
+            .onFailure { log.error { "error while publishing outbox events: ${it.message}" } }
     }
 
     private companion object {

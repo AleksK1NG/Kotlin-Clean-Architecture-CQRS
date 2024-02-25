@@ -30,7 +30,7 @@ class OutboxRepositoryImpl(
             .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
             .one()
             .awaitSingle()
-            .also { log.info { "saved event: $it" } }
+            .also { log.info { "saved eventId: $it" } }
 
         event
     }
@@ -45,9 +45,10 @@ class OutboxRepositoryImpl(
                 .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
                 .one()
                 .awaitSingleOrNull()
-                .let { callback(event) }
-                .let { deleteOutboxEvent(event) }
-                .let { _ -> event }
+
+            callback(event)
+            deleteOutboxEvent(event)
+            event
         }
     }
 
@@ -70,7 +71,7 @@ class OutboxRepositoryImpl(
         }
     }
 
-    private suspend fun deleteOutboxEvent(event: OutboxEvent) {
+    private suspend fun deleteOutboxEvent(event: OutboxEvent) = repositoryScope {
         dbClient.sql(DELETE_OUTBOX_EVENT_BY_ID_QUERY)
             .bindValues(mutableMapOf("eventId" to event.eventId))
             .fetch()

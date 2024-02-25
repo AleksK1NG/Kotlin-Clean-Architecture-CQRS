@@ -35,7 +35,9 @@ class AccountController(
     @PostMapping
     suspend fun createAccount(@Valid @RequestBody request: CreateAccountRequest) = controllerScope {
         accountCommandService.handle(request.toCommand())
-            .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
+            .let {
+                ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse(status = HttpStatus.CREATED, data = it))
+            }
     }
 
     @Operation(method = "getAccountById", operationId = "getAccountById", description = "Get account by id")
@@ -52,7 +54,7 @@ class AccountController(
         @Valid @RequestBody request: DepositBalanceRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
     }
 
     @Operation(method = "withdrawBalance", operationId = "withdrawBalance", description = "Withdraw balance")
@@ -62,7 +64,7 @@ class AccountController(
         @Valid @RequestBody request: WithdrawBalanceRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
     }
 
     @Operation(method = "updateStatus", operationId = "updateStatus", description = "Update account status")
@@ -72,7 +74,7 @@ class AccountController(
         @Valid @RequestBody request: ChangeAccountStatusRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
     }
 
     @Operation(method = "updatePersonalInfo", operationId = "updatePersonalInfo", description = "Update account info")
@@ -82,7 +84,7 @@ class AccountController(
         @Valid @RequestBody request: UpdatePersonalInfoRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
     }
 
     @Operation(method = "changeContactInfo", operationId = "changeContactInfo", description = "Update account contacts")
@@ -92,7 +94,7 @@ class AccountController(
         @Valid @RequestBody request: ChangeContactInfoRequest
     ) = controllerScope {
         accountCommandService.handle(request.toCommand(AccountId(id)))
-            .let { ResponseEntity.ok(it) }
+            .let { ResponseEntity.ok(BaseResponse(status = HttpStatus.OK)) }
     }
 
     @Operation(method = "getAccountByEmail", operationId = "getAccountByEmail", description = "Get account by email")

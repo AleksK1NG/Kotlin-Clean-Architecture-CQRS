@@ -31,7 +31,7 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
@@ -48,31 +48,12 @@ class AccountCreatedEventConsumer(
         consumerRecord = record,
         deserializationClazz = AccountCreatedEvent::class.java,
         unprocessableExceptions = unprocessableExceptions,
-        onError = eventProcessor.defaultErrorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountCreatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
         accountEventHandlerService.on(event)
         ack.acknowledge()
         log.info { "consumerRecord successfully processed: $record" }
     }
-
-
-//    private val accountCreatedErrorHandler: ErrorHandler<AccountCreatedEvent> = { err, ack, consumerRecord, clazz ->
-//        log.error { "error while processing record: ${consumerRecord.topic()} key:${consumerRecord.key()}, error: ${err.message}" }
-//
-//        val retryCount = consumerRecord.getRetryCount()
-//        val retryHeadersMap = buildRetryCountHeader(retryCount + 1)
-//        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
-//
-//        publisher.publish(
-//            topic = kafkaTopics.accountCreatedRetry.name,
-//            key = consumerRecord.key(),
-//            data = consumerRecord.value(),
-//            headers = mergedHeaders
-//        )
-//
-//        log.warn { "published retry topic: ${kafkaTopics.accountCreated.name}" }
-//        ack.acknowledge()
-//    }
 
 
     private companion object {
