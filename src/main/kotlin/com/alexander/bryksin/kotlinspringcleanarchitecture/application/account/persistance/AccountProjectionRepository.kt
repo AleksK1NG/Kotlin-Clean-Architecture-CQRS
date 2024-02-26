@@ -17,4 +17,6 @@ interface AccountProjectionRepository {
     suspend fun getAccountByEmail(email: String): Either<AppError, Account>
 
     suspend fun getAllAccounts(page: Int, size: Int): Either<AppError, AccountsList>
+
+    suspend fun upsert(account: Account): Either<AppError, Account>
 }

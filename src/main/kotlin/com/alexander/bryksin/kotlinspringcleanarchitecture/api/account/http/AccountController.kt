@@ -44,7 +44,7 @@ class AccountController(
     @Operation(method = "getAccountById", operationId = "getAccountById", description = "Get account by id")
     @GetMapping(path = ["{id}"])
     suspend fun getAccountById(@PathVariable id: UUID): Either<AppError, ResponseEntity<*>> = eitherScope {
-        accountQueryService.handle(GetAccountByIdQuery(id)).fold(
+        accountQueryService.handle(GetAccountByIdQuery(AccountId(id))).fold(
             ifLeft = { mapErrorToResponse(it) },
             ifRight = { okResponse(it) }
         )

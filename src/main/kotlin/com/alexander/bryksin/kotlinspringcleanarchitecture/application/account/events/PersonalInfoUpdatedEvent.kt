@@ -28,8 +28,8 @@ data class PersonalInfoUpdatedEvent(
 
 fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
     return PersonalInfoUpdatedEvent(
-        accountId = accountId!!,
-        aggregateId = accountId?.string() ?: "",
+        accountId = accountId,
+        aggregateId = accountId.id.toString(),
         eventId = UUID.randomUUID().toString(),
         eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
         timestamp = Instant.now(),

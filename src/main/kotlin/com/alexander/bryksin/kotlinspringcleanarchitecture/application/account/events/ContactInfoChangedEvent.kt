@@ -29,8 +29,8 @@ data class ContactInfoChangedEvent(
 
 fun Account.toContactInfoChangedEvent(): ContactInfoChangedEvent {
     return ContactInfoChangedEvent(
-        accountId = accountId!!,
-        aggregateId = accountId.toString(),
+        accountId = accountId,
+        aggregateId = accountId.id.toString(),
         eventId = UUID.randomUUID().toString(),
         eventType = ACCOUNT_CONTACT_INFO_CHANGED_V1,
         timestamp = Instant.now(),

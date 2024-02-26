@@ -44,8 +44,8 @@ fun ConsumerRecord<String, ByteArray>.mergeHeaders(headers: Map<String, ByteArra
     return headersMap
 }
 
-fun buildRetryCountHeader(count: Int): Map<String, ByteArray> {
-    return mapOf(EventProcessor.KAFKA_HEADERS_RETRY to count.toString().toByteArray(Charsets.UTF_8))
+fun buildRetryCountHeader(count: Int): MutableMap<String, ByteArray> {
+    return mutableMapOf(EventProcessor.KAFKA_HEADERS_RETRY to count.toString().toByteArray(Charsets.UTF_8))
 }
 
 fun <T> Serializer.deserializeRecordToEvent(consumerRecord: ConsumerRecord<String, ByteArray>, clazz: Class<T>): T {

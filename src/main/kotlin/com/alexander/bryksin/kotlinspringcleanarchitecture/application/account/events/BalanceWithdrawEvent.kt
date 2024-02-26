@@ -29,8 +29,8 @@ data class BalanceWithdrawEvent(
 
 fun Account.toBalanceWithdrawEvent(newBalance: Balance): BalanceWithdrawEvent {
     return BalanceWithdrawEvent(
-        accountId = accountId!!,
-        aggregateId = accountId.toString(),
+        accountId = accountId,
+        aggregateId = accountId.id.toString(),
         eventId = UUID.randomUUID().toString(),
         eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
         timestamp = Instant.now(),

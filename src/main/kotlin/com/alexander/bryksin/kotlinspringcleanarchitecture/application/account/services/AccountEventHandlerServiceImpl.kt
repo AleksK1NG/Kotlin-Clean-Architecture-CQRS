@@ -53,7 +53,7 @@ class AccountEventHandlerServiceImpl(
         }.bind()
     }
 
-    override suspend fun on(event: DomainStatusChangedEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: AccountStatusChangedEvent): Either<AppError, Unit> = eitherScope {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.updateStatus(event.status).bind()
         }.bind()

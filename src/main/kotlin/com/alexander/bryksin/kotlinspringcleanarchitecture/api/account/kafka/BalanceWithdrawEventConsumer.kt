@@ -26,11 +26,14 @@ class BalanceWithdrawEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceWithdrawEvent::class.java,
-        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountBalanceWithdraw.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountBalanceWithdrawRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountBalanceWithdrawRetry.name
+        )
     }
 
     @KafkaListener(
@@ -43,9 +46,12 @@ class BalanceWithdrawEventConsumer(
         deserializationClazz = BalanceWithdrawEvent::class.java,
         onError = eventProcessor.errorRetryHandler(kafkaTopics.accountBalanceWithdrawRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountBalanceWithdrawRetry.name
+        )
     }
 
 
