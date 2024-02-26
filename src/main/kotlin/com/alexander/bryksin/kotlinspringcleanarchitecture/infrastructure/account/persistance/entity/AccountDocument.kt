@@ -4,12 +4,13 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.*
 import com.mongodb.client.model.Updates
 import org.bson.codecs.pojo.annotations.BsonId
+import org.bson.codecs.pojo.annotations.BsonProperty
 import org.bson.types.ObjectId
 import java.time.Instant
 import java.util.*
 
 data class AccountDocument(
-    @field:BsonId
+    @field:BsonId @field:BsonProperty(value = "_id")
     val id: ObjectId,
     val accountId: String?,
     val contactInfo: ContactInfo = ContactInfo(),
@@ -26,7 +27,7 @@ data class AccountDocument(
 
 fun Account.toDocument(): AccountDocument = AccountDocument(
     id = ObjectId(),
-    accountId = accountId?.id.toString(),
+    accountId = accountId.id.toString(),
     contactInfo = contactInfo,
     personalInfo = personalInfo,
     address = address,

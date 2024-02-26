@@ -19,6 +19,9 @@ import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.ReturnDocument
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -34,13 +37,13 @@ class AccountProjectionRepositoryImpl(
     private val accountsDB = mongoClient.getDatabase(ACCOUNTS_DB)
     private val accountsCollection = accountsDB.getCollection<AccountDocument>(ACCOUNTS_COLLECTION)
 
-    override suspend fun createAccount(account: Account): Either<AppError, Account> = eitherScope {
+    override suspend fun createAccount(account: Account): Either<AppError, Account> = eitherScope(ctx) {
         val insertOneResult = accountsCollection.insertOne(account.toDocument())
         log.info { "account insertOneResult: ${insertOneResult}, account: $account" }
         account
     }
 
-    override suspend fun updateAccount(account: Account): Either<AppError, Account> = eitherScope {
+    override suspend fun updateAccount(account: Account): Either<AppError, Account> = eitherScope(ctx) {
         val filter = and(eq(ACCOUNT_ID, account.accountId.string()), eq(VERSION, account.version))
         val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
 
@@ -53,7 +56,7 @@ class AccountProjectionRepositoryImpl(
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
 
-    override suspend fun upsert(account: Account): Either<AppError, Account> = eitherScope {
+    override suspend fun upsert(account: Account): Either<AppError, Account> = eitherScope(ctx) {
         val filter = and(eq(ACCOUNT_ID, account.accountId.string()))
         val options = FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER)
 
@@ -66,20 +69,20 @@ class AccountProjectionRepositoryImpl(
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
 
-    override suspend fun getAccountById(id: AccountId): Either<AppError, Account> = eitherScope {
+    override suspend fun getAccountById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
         accountsCollection.find<AccountDocument>(eq(ACCOUNT_ID, id.string()))
             .firstOrNull()
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: $id not found"))
     }
 
-    override suspend fun getAccountByEmail(email: String): Either<AppError, Account> = eitherScope {
+    override suspend fun getAccountByEmail(email: String): Either<AppError, Account> = eitherScope(ctx) {
         val filter = and(eq(CONTACT_INFO_EMAIL, email))
         accountsCollection.find(filter).firstOrNull()?.toAccount()
             ?: raise(AccountNotFoundError("account with email: $email not found"))
     }
 
-    override suspend fun getAllAccounts(page: Int, size: Int): Either<AppError, AccountsList> = eitherScope {
+    override suspend fun getAllAccounts(page: Int, size: Int): Either<AppError, AccountsList> = eitherScope(ctx) {
         parZip(coroutineContext, {
             accountsCollection.find()
                 .skip(page * size)
@@ -97,6 +100,8 @@ class AccountProjectionRepositoryImpl(
             )
         }
     }
+
+    private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 
     private companion object {
         private val log = KotlinLogging.logger { }
