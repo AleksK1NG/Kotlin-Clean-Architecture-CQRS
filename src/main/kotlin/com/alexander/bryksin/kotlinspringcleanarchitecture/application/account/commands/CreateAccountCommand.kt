@@ -12,7 +12,7 @@ data class CreateAccountCommand(
     val contactInfo: ContactInfo = ContactInfo(),
     val personalInfo: PersonalInfo = PersonalInfo(),
     val address: Address = Address(),
-) {
+) : AccountDomainCommand {
     companion object {}
 }
 

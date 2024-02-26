@@ -1,0 +1,3 @@
+package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands
+
+sealed interface AccountDomainCommand
