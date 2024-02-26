@@ -175,7 +175,7 @@ class EventProcessor(
             ifLeft = { err ->
                 val retryCount = consumerRecord.getRetriesCount().getOrDefault(BASE_RETRY_COUNT)
                 val retryHeadersMap = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
-//                retryHeadersMap["error_message"] = err.toString().toByteArray(Charsets.UTF_8)
+                retryHeadersMap["error_message"] = err.toString().toByteArray(Charsets.UTF_8)
                 log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
 
                 val value = String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())
