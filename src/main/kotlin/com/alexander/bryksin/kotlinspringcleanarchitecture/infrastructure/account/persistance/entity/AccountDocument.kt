@@ -11,7 +11,7 @@ import java.util.*
 
 data class AccountDocument(
     @field:BsonId @field:BsonProperty(value = "_id")
-    val id: ObjectId,
+    val id: ObjectId? = null,
     val accountId: String?,
     val contactInfo: ContactInfo = ContactInfo(),
     val personalInfo: PersonalInfo = PersonalInfo(),
