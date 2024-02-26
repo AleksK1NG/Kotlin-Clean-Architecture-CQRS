@@ -1,7 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka.EventProcessor
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.info
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.PersonalInfoUpdatedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
@@ -27,13 +26,15 @@ class PersonalInfoUpdatedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
-        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountInfoUpdated.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountInfoUpdatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: ${record.info(withValue = true)}" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountInfoUpdatedRetry.name
+        )
     }
-
 
     @KafkaListener(
         groupId = "\${kafka.consumer-group-id:account_microservice_group_id}",
@@ -45,9 +46,12 @@ class PersonalInfoUpdatedEventConsumer(
         deserializationClazz = PersonalInfoUpdatedEvent::class.java,
         onError = eventProcessor.errorRetryHandler(kafkaTopics.accountInfoUpdatedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: ${record.info(withValue = true)}" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountInfoUpdatedRetry.name
+        )
     }
 
 

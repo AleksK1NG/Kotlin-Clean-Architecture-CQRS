@@ -26,11 +26,14 @@ class BalanceDepositedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = BalanceDepositedEvent::class.java,
-        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountBalanceDeposited.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountBalanceDepositedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountBalanceDepositedRetry.name
+        )
     }
 
     @KafkaListener(
@@ -43,11 +46,13 @@ class BalanceDepositedEventConsumer(
         deserializationClazz = BalanceDepositedEvent::class.java,
         onError = eventProcessor.errorRetryHandler(kafkaTopics.accountBalanceDepositedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountBalanceDepositedRetry.name
+        )
     }
-
 
 
     private companion object {

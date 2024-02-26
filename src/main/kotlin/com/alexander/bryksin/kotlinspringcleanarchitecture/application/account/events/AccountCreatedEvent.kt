@@ -61,8 +61,8 @@ fun AccountCreatedEvent.toAccount() = Account(
 
 fun Account.toAccountCreatedEvent(): AccountCreatedEvent {
     return AccountCreatedEvent(
-        accountId = accountId!!,
-        aggregateId = accountId?.string() ?: "",
+        accountId = accountId,
+        aggregateId =accountId.id.toString(),
         contactInfo = contactInfo,
         personalInfo = personalInfo,
         address = address,

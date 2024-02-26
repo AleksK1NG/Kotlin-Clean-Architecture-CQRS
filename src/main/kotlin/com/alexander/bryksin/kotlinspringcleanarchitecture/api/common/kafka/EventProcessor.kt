@@ -1,13 +1,22 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka
 
+import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidCurrencyException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
@@ -33,7 +42,10 @@ data class ErrorHandlerParams<T>(
 class EventProcessor(
     private val serializer: Serializer,
     private val publisher: EventPublisher,
-    private val kafkaTopics: KafkaTopics
+    private val kafkaTopics: KafkaTopics,
+    private val accountEventHandlerService: AccountEventHandlerService,
+    private val accountQueryService: AccountQueryService,
+    private val accountProjectionRepository: AccountProjectionRepository
 ) {
 
     fun <T> process(
@@ -120,6 +132,7 @@ class EventProcessor(
             )
             logDlqMsg(retryCount, maxRetryCount, consumerRecord)
             ack.acknowledge()
+            restoreProjection(event)
             return
         }
 
@@ -151,6 +164,65 @@ class EventProcessor(
     }
 
 
+    internal suspend fun <T : DomainEvent> on(
+        ack: Acknowledgment,
+        consumerRecord: ConsumerRecord<String, ByteArray>,
+        event: T,
+        retryTopic: String,
+        maxRetryCount: Int = DEFAULT_RETRY_COUNT,
+    ) {
+        on(event).fold(
+            ifLeft = { err ->
+                val retryCount = consumerRecord.getRetriesCount().getOrDefault(BASE_RETRY_COUNT)
+                val retryHeadersMap = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
+//                retryHeadersMap["error_message"] = err.toString().toByteArray(Charsets.UTF_8)
+                log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
+
+                val value = String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())
+                log.info { "retry value: $value" }
+
+                if (unProcessableDomainErrors.contains(err::class.java) || retryCount >= maxRetryCount) {
+                    log.error { "commit unprocessable domain error: $err" }
+                    publisher.publish(kafkaTopics.deadLetterQueue.name, event.aggregateId, event, retryHeadersMap)
+                    ack.acknowledge()
+                    restoreProjection(event)
+                    return@fold
+                }
+                publisher.publish(retryTopic, event.aggregateId, event, retryHeadersMap)
+                log.warn { "published to retry: ${consumerRecord.info(withValue = true)}" }
+                ack.acknowledge()
+            },
+            ifRight = {
+                log.info { "record successfully processed: ${consumerRecord.info()}" }
+                ack.acknowledge()
+            }
+        )
+    }
+
+    internal suspend fun on(event: DomainEvent): Either<AppError, Unit> {
+        return when (event) {
+            is AccountCreatedEvent -> accountEventHandlerService.on(event)
+            is AccountStatusChangedEvent -> accountEventHandlerService.on(event)
+            is BalanceDepositedEvent -> accountEventHandlerService.on(event)
+            is BalanceWithdrawEvent -> accountEventHandlerService.on(event)
+            is ContactInfoChangedEvent -> accountEventHandlerService.on(event)
+            is PersonalInfoUpdatedEvent -> accountEventHandlerService.on(event)
+        }
+    }
+
+    internal suspend fun restoreProjection(event: Any) = eitherScope {
+        if (event !is DomainEvent) return@eitherScope
+
+        val accountId = AccountId(event.aggregateId.toUUID())
+        val account = accountQueryService.handle(GetAccountByIdQuery(accountId)).bind()
+        val savedAccount = accountProjectionRepository.upsert(account).bind()
+        log.info { "restored account: $savedAccount" }
+    }.fold(
+        ifLeft = { log.error { "error while trying restore projection" } },
+        ifRight = { log.info { "projection restored for event: $event" } }
+    )
+
+
     companion object {
         private val log = KotlinLogging.logger { }
         val dlqExceptions = setOf(
@@ -168,6 +240,16 @@ class EventProcessor(
     }
 }
 
+
 internal fun isUnprocessableException(e: Exception, unprocessableExceptions: Set<Class<*>> = setOf()): Boolean {
     return (unprocessableExceptions.contains(e::class.java) || EventProcessor.dlqExceptions.contains(e::class.java))
 }
+
+internal val unProcessableDomainErrors = setOf(
+//    AccountNotFoundError::class.java,
+    EmailValidationError::class.java,
+    InvalidBalanceError::class.java,
+    PaymentValidationError::class.java,
+    LowerEventVersionError::class.java,
+    SameEventVersionError::class.java,
+)

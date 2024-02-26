@@ -2,7 +2,8 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.error
 
 sealed interface AppError
 
-data class GenericAppError(val msg: String) : AppError
+data class GenericAppError(val msg: String, val cause: Throwable? = null, val exceptionClazz: Class<*>? = null) : AppError
+
 data class AccountNotFoundError(val msg: String) : AppError
 data class EmailValidationError(val msg: String) : AppError
 data class PaymentValidationError(val msg: String) : AppError

@@ -1,7 +1,5 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries
 
-import java.util.*
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 
-data class GetAccountByIdQuery(val id: UUID) {
-
-}
+data class GetAccountByIdQuery(val id: AccountId)

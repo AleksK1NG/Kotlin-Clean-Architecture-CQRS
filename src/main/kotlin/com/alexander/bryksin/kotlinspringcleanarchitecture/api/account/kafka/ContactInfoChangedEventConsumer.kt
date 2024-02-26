@@ -1,7 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka.EventProcessor
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.info
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.ContactInfoChangedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
@@ -17,7 +16,7 @@ class ContactInfoChangedEventConsumer(
     private val eventProcessor: EventProcessor,
     private val accountEventHandlerService: AccountEventHandlerService,
     private val kafkaTopics: KafkaTopics
-)  {
+) {
 
     @KafkaListener(
         groupId = "\${kafka.consumer-group-id:account_microservice_group_id}",
@@ -27,11 +26,14 @@ class ContactInfoChangedEventConsumer(
         ack = ack,
         consumerRecord = record,
         deserializationClazz = ContactInfoChangedEvent::class.java,
-        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountContactInfoChanged.name, DEFAULT_RETRY_COUNT)
+        onError = eventProcessor.errorRetryHandler(kafkaTopics.accountContactInfoChangedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: $record" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountContactInfoChangedRetry.name
+        )
     }
 
     @KafkaListener(
@@ -44,11 +46,13 @@ class ContactInfoChangedEventConsumer(
         deserializationClazz = ContactInfoChangedEvent::class.java,
         onError = eventProcessor.errorRetryHandler(kafkaTopics.accountContactInfoChangedRetry.name, DEFAULT_RETRY_COUNT)
     ) { event ->
-        accountEventHandlerService.on(event)
-        ack.acknowledge()
-        log.info { "consumerRecord successfully processed: ${record.info(withValue = true)}" }
+        eventProcessor.on(
+            ack = ack,
+            consumerRecord = record,
+            event = event,
+            retryTopic = kafkaTopics.accountContactInfoChangedRetry.name
+        )
     }
-
 
 
     private companion object {
