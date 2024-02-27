@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.*
@@ -150,19 +150,6 @@ class EventProcessor(
         ack.acknowledge()
     }
 
-    private fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
-        Job() + CoroutineName(this::class.java.name) + context
-
-    private fun logDlqMsg(
-        retryCount: Int,
-        maxRetryCount: Int,
-        consumerRecord: ConsumerRecord<String, ByteArray>
-    ) {
-        log.error {
-            "retry: $retryCount of $maxRetryCount exceed, published to dlq: ${kafkaTopics.deadLetterQueue.name} data: ${consumerRecord.info()}"
-        }
-    }
-
 
     internal suspend fun <T : DomainEvent> on(
         ack: Acknowledgment,
@@ -171,24 +158,28 @@ class EventProcessor(
         retryTopic: String,
         maxRetryCount: Int = DEFAULT_RETRY_COUNT,
     ) {
-        on(event).fold(
+        handle(event).fold(
             ifLeft = { err ->
-                val retryCount = consumerRecord.getRetriesCount().getOrDefault(BASE_RETRY_COUNT)
-                val retryHeadersMap = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
-                retryHeadersMap["error_message"] = err.toString().toByteArray(Charsets.UTF_8)
-                log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
+                if (unProcessableDomainErrors.contains(err::class.java) || consumerRecord.retryCount() >= maxRetryCount) {
+                    log.error { "unprocessable domain error: $err" }
 
-                val value = String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())
-                log.info { "retry value: $value" }
-
-                if (unProcessableDomainErrors.contains(err::class.java) || retryCount >= maxRetryCount) {
-                    log.error { "commit unprocessable domain error: $err" }
-                    publisher.publish(kafkaTopics.deadLetterQueue.name, event.aggregateId, event, retryHeadersMap)
+                    publisher.publish(
+                        topic = kafkaTopics.deadLetterQueue.name,
+                        key = event.aggregateId,
+                        data = event,
+                        headers = consumerRecord.getKafkaRetryHeaders(err = err)
+                    )
                     ack.acknowledge()
                     restoreProjection(event)
                     return@fold
                 }
-                publisher.publish(retryTopic, event.aggregateId, event, retryHeadersMap)
+
+                publisher.publish(
+                    topic = retryTopic,
+                    key = event.aggregateId,
+                    data = event,
+                    headers = consumerRecord.getKafkaRetryHeaders(err = err)
+                )
                 log.warn { "published to retry: ${consumerRecord.info(withValue = true)}" }
                 ack.acknowledge()
             },
@@ -199,7 +190,7 @@ class EventProcessor(
         )
     }
 
-    internal suspend fun on(event: DomainEvent): Either<AppError, Unit> {
+    internal suspend fun handle(event: DomainEvent): Either<AppError, Unit> {
         return when (event) {
             is AccountCreatedEvent -> accountEventHandlerService.on(event)
             is AccountStatusChangedEvent -> accountEventHandlerService.on(event)
@@ -209,6 +200,7 @@ class EventProcessor(
             is PersonalInfoUpdatedEvent -> accountEventHandlerService.on(event)
         }
     }
+
 
     internal suspend fun restoreProjection(event: Any) = eitherScope {
         if (event !is DomainEvent) return@eitherScope
@@ -222,6 +214,18 @@ class EventProcessor(
         ifRight = { log.info { "projection restored for event: $event" } }
     )
 
+    private fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
+        Job() + CoroutineName(this::class.java.name) + context
+
+    private fun logDlqMsg(
+        retryCount: Int,
+        maxRetryCount: Int,
+        consumerRecord: ConsumerRecord<String, ByteArray>
+    ) {
+        log.error {
+            "retry: $retryCount of $maxRetryCount exceed, published to dlq: ${kafkaTopics.deadLetterQueue.name} data: ${consumerRecord.info()}"
+        }
+    }
 
     companion object {
         private val log = KotlinLogging.logger { }
@@ -237,6 +241,7 @@ class EventProcessor(
         private const val DLQ_ERROR_MESSAGE = "dlqErrorMessage"
         private const val BASE_RETRY_COUNT = 0
         private const val RETRY_COUNT_STEP = 1
+        const val KAFKA_HEADERS_ERROR_MESSAGE = "error_message"
     }
 }
 
@@ -246,7 +251,6 @@ internal fun isUnprocessableException(e: Exception, unprocessableExceptions: Set
 }
 
 internal val unProcessableDomainErrors = setOf(
-//    AccountNotFoundError::class.java,
     EmailValidationError::class.java,
     InvalidBalanceError::class.java,
     PaymentValidationError::class.java,

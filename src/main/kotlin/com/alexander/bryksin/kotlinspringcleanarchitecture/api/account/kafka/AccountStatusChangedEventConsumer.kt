@@ -1,11 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka.EventProcessor
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountStatusChangedEvent
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.Acknowledgment
@@ -14,10 +10,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class AccountStatusChangedEventConsumer(
-    private val accountEventHandlerService: AccountEventHandlerService,
     private val eventProcessor: EventProcessor,
     private val kafkaTopics: KafkaTopics,
-    private val publisher: EventPublisher
 ) {
 
     @KafkaListener(
@@ -58,7 +52,6 @@ class AccountStatusChangedEventConsumer(
     }
 
     private companion object {
-        private val log = KotlinLogging.logger { }
         private const val DEFAULT_RETRY_COUNT = 3
     }
 }

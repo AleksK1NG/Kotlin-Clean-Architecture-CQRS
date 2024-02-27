@@ -1,6 +1,5 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafka.EventProcessor
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.AccountCreatedEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService

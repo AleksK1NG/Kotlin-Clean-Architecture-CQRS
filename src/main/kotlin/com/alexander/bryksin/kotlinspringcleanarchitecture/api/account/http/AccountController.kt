@@ -10,6 +10,9 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import kotlinx.coroutines.CoroutineName
@@ -28,7 +31,18 @@ class AccountController(
     private val accountQueryService: AccountQueryService
 ) {
 
-    @Operation(method = "createAccount", operationId = "createAccount", description = "Create new Account")
+    @Operation(
+        method = "createAccount", operationId = "createAccount", description = "Create new Account",
+        responses = [
+            ApiResponse(
+                responseCode = "201",
+                content = [Content(
+                    schema = Schema(
+                        implementation = AccountId::class
+                    )
+                )]
+            )],
+    )
     @PostMapping
     suspend fun createAccount(@Valid @RequestBody request: CreateAccountRequest): ResponseEntity<out Any> =
         eitherScope(ctx) {
@@ -38,16 +52,38 @@ class AccountController(
             ifRight = { createdResponse(it) }
         )
 
-    @Operation(method = "getAccountById", operationId = "getAccountById", description = "Get account by id")
+    @Operation(
+        method = "getAccountById", operationId = "getAccountById", description = "Get account by id",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = AccountResponse::class
+                    )
+                )]
+            )],
+    )
     @GetMapping(path = ["{id}"])
     suspend fun getAccountById(@PathVariable id: UUID): ResponseEntity<out Any> = eitherScope(ctx) {
         accountQueryService.handle(GetAccountByIdQuery(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { okResponse(it) }
+        ifRight = { okResponse(it.toResponse()) }
     )
 
-    @Operation(method = "depositBalance", operationId = "depositBalance", description = "Deposit balance")
+    @Operation(
+        method = "depositBalance", operationId = "depositBalance", description = "Deposit balance",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = BaseResponse::class
+                    )
+                )]
+            )],
+    )
     @PutMapping(path = ["/{id}/deposit"])
     suspend fun depositBalance(
         @PathVariable id: UUID,
@@ -59,7 +95,18 @@ class AccountController(
         ifRight = { OK_RESPONSE }
     )
 
-    @Operation(method = "withdrawBalance", operationId = "withdrawBalance", description = "Withdraw balance")
+    @Operation(
+        method = "withdrawBalance", operationId = "withdrawBalance", description = "Withdraw balance",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = BaseResponse::class
+                    )
+                )]
+            )],
+    )
     @PutMapping(path = ["/{id}/withdraw"])
     suspend fun withdrawBalance(
         @PathVariable id: UUID,
@@ -71,7 +118,18 @@ class AccountController(
         ifRight = { OK_RESPONSE }
     )
 
-    @Operation(method = "updateStatus", operationId = "updateStatus", description = "Update account status")
+    @Operation(
+        method = "updateStatus", operationId = "updateStatus", description = "Update account status",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = BaseResponse::class
+                    )
+                )]
+            )],
+    )
     @PutMapping(path = ["/{id}/status"])
     suspend fun updateStatus(
         @PathVariable id: UUID,
@@ -83,7 +141,18 @@ class AccountController(
         ifRight = { OK_RESPONSE }
     )
 
-    @Operation(method = "updatePersonalInfo", operationId = "updatePersonalInfo", description = "Update account info")
+    @Operation(
+        method = "updatePersonalInfo", operationId = "updatePersonalInfo", description = "Update account info",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = BaseResponse::class
+                    )
+                )]
+            )],
+    )
     @PutMapping(path = ["/{id}/info/"])
     suspend fun updatePersonalInfo(
         @PathVariable id: UUID,
@@ -95,7 +164,18 @@ class AccountController(
         ifRight = { OK_RESPONSE }
     )
 
-    @Operation(method = "changeContactInfo", operationId = "changeContactInfo", description = "Update account contacts")
+    @Operation(
+        method = "changeContactInfo", operationId = "changeContactInfo", description = "Update account contacts",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = BaseResponse::class
+                    )
+                )]
+            )],
+    )
     @PutMapping(path = ["/{id}/contacts/"])
     suspend fun changeContactInfo(
         @PathVariable id: UUID,
@@ -107,7 +187,18 @@ class AccountController(
         ifRight = { OK_RESPONSE }
     )
 
-    @Operation(method = "getAccountByEmail", operationId = "getAccountByEmail", description = "Get account by email")
+    @Operation(
+        method = "getAccountByEmail", operationId = "getAccountByEmail", description = "Get account by email",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = AccountResponse::class
+                    )
+                )]
+            )],
+    )
     @GetMapping(path = ["/email/{email}"])
     suspend fun getAccountByEmail(@PathVariable email: String): ResponseEntity<out Any> = eitherScope(ctx) {
         accountQueryService.handle(GetAccountByEmailQuery(email)).bind()
@@ -116,7 +207,18 @@ class AccountController(
         ifRight = { okResponse(it) }
     )
 
-    @Operation(method = "getAllAccounts", operationId = "getAccountByEmail", description = "Get all accounts")
+    @Operation(
+        method = "getAllAccounts", operationId = "getAccountByEmail", description = "Get all accounts",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                content = [Content(
+                    schema = Schema(
+                        implementation = AccountsListResponse::class
+                    )
+                )]
+            )],
+    )
     @GetMapping(path = ["/all"])
     suspend fun getAllAccounts(
         @RequestParam(name = "page", required = false, defaultValue = "0") page: Int,
@@ -125,7 +227,7 @@ class AccountController(
         accountQueryService.handle(GetAllAccountsQuery(page = page, size = size)).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { okResponse(it) }
+        ifRight = { okResponse(it.toHttpResponse()) }
     )
 
     private val ctx = Job() + CoroutineName(this::class.java.name)
@@ -136,8 +238,8 @@ class AccountController(
     }
 }
 
-fun <T : Any> createdResponse(data: T) =
+internal fun <T : Any> createdResponse(data: T) =
     ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse(status = HttpStatus.CREATED, data = data))
 
-fun <T : Any> okResponse(data: T) =
+internal fun <T : Any> okResponse(data: T) =
     ResponseEntity.status(HttpStatus.OK).body(BaseResponse(status = HttpStatus.OK, data = data))
