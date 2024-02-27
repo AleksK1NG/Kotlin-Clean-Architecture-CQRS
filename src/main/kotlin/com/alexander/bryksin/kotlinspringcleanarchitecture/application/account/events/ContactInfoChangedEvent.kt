@@ -42,14 +42,6 @@ fun Account.toContactInfoChangedEvent(): ContactInfoChangedEvent {
     )
 }
 
-fun ContactInfoChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
-    eventId = UUID.randomUUID(),
-    eventType = ACCOUNT_CONTACT_INFO_CHANGED_V1,
-    aggregateId = aggregateId,
-    data = data,
-    version = version,
-    timestamp = Instant.now(),
-)
 
 fun ContactInfoChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

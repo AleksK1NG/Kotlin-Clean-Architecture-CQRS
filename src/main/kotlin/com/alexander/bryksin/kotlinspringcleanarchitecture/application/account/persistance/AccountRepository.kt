@@ -7,9 +7,9 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 
 interface AccountRepository {
 
-    suspend fun getAccountById(id: AccountId): Either<AppError, Account>
+    suspend fun getById(id: AccountId): Either<AppError, Account>
 
-    suspend fun saveAccount(account: Account): Either<AppError, Account>
+    suspend fun save(account: Account): Either<AppError, Account>
 
-    suspend fun updateAccount(account: Account): Either<AppError, Account>
+    suspend fun update(account: Account): Either<AppError, Account>
 }

@@ -5,7 +5,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountStatus
 
 data class ChangeAccountStatusRequest(val status: AccountStatus) {
-    companion object {}
+    companion object
 }
 
 fun ChangeAccountStatusRequest.toCommand(accountId: AccountId) = ChangeAccountStatusCommand(

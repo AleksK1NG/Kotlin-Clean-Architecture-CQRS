@@ -37,13 +37,14 @@ class AccountProjectionRepositoryImpl(
     private val accountsDB = mongoClient.getDatabase(ACCOUNTS_DB)
     private val accountsCollection = accountsDB.getCollection<AccountDocument>(ACCOUNTS_COLLECTION)
 
-    override suspend fun createAccount(account: Account): Either<AppError, Account> = eitherScope(ctx) {
-        val insertOneResult = accountsCollection.insertOne(account.toDocument())
-        log.info { "account insertOneResult: ${insertOneResult}, account: $account" }
+    override suspend fun save(account: Account): Either<AppError, Account> = eitherScope<AppError, Account>(ctx) {
+        val insertResult = accountsCollection.insertOne(account.toDocument())
+        log.info { "account insertOneResult: ${insertResult}, account: $account" }
         account
     }
+        .onLeft { log.error { "error while saving account: $it" } }
 
-    override suspend fun updateAccount(account: Account): Either<AppError, Account> = eitherScope(ctx) {
+    override suspend fun update(account: Account): Either<AppError, Account> = eitherScope(ctx) {
         val filter = and(eq(ACCOUNT_ID, account.accountId.string()), eq(VERSION, account.version))
         val options = FindOneAndUpdateOptions().upsert(false).returnDocument(ReturnDocument.AFTER)
 
@@ -55,6 +56,7 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
+        .onLeft { log.error { "error while updating account: $it" } }
 
     override suspend fun upsert(account: Account): Either<AppError, Account> = eitherScope(ctx) {
         val filter = and(eq(ACCOUNT_ID, account.accountId.string()))
@@ -68,38 +70,43 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
+        .onLeft { log.error { "error while upserting account: $it" } }
 
-    override suspend fun getAccountById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
+    override suspend fun getById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
         accountsCollection.find<AccountDocument>(eq(ACCOUNT_ID, id.string()))
             .firstOrNull()
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: $id not found"))
     }
+        .onLeft { log.error { "error while loading account by id: $it" } }
 
-    override suspend fun getAccountByEmail(email: String): Either<AppError, Account> = eitherScope(ctx) {
+    override suspend fun getByEmail(email: String): Either<AppError, Account> = eitherScope(ctx) {
         val filter = and(eq(CONTACT_INFO_EMAIL, email))
         accountsCollection.find(filter).firstOrNull()?.toAccount()
             ?: raise(AccountNotFoundError("account with email: $email not found"))
     }
+        .onLeft { log.error { "error while loading account by email: $it" } }
 
-    override suspend fun getAllAccounts(page: Int, size: Int): Either<AppError, AccountsList> = eitherScope(ctx) {
-        parZip(coroutineContext, {
-            accountsCollection.find()
-                .skip(page * size)
-                .limit(size)
-                .map { it.toAccount() }
-                .toList()
-        }, {
-            accountsCollection.find().count()
-        }) { list, totalCount ->
-            AccountsList(
-                page = page,
-                size = size,
-                totalCount = totalCount,
-                accountsList = list
-            )
+    override suspend fun getAll(page: Int, size: Int): Either<AppError, AccountsList> =
+        eitherScope<AppError, AccountsList>(ctx) {
+            parZip(coroutineContext, {
+                accountsCollection.find()
+                    .skip(page * size)
+                    .limit(size)
+                    .map { it.toAccount() }
+                    .toList()
+            }, {
+                accountsCollection.find().count()
+            }) { list, totalCount ->
+                AccountsList(
+                    page = page,
+                    size = size,
+                    totalCount = totalCount,
+                    accountsList = list
+                )
+            }
         }
-    }
+            .onLeft { log.error { "error while loading all accounts: $it" } }
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 

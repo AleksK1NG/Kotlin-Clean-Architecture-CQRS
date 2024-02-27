@@ -40,14 +40,6 @@ fun Account.toStatusChangedEvent(): AccountStatusChangedEvent {
     )
 }
 
-fun AccountStatusChangedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
-    eventId = UUID.randomUUID(),
-    eventType = ACCOUNT_STATUS_CHANGED_V1,
-    aggregateId = aggregateId,
-    data = data,
-    version = this.version,
-    timestamp = Instant.now(),
-)
 
 fun AccountStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

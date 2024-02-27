@@ -1,5 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.configuration.mongo
 
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.utils.runSuspendCatching
 import com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.account.persistance.entity.AccountDocument
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Indexes
@@ -17,38 +18,37 @@ class MongoInitializer(private val mongoClient: MongoClient) {
 
     @PostConstruct
     fun init() = runBlocking {
-        try {
+        runSuspendCatching {
             mongoClient.listDatabases().collect { dbs -> log.info { "db names: ${dbs.toJson()}" } }
 
-            val db = mongoClient.getDatabase(ACCOUNTS_COLLECTION)
-            val collection = db.getCollection<AccountDocument>(ACCOUNTS_DB)
+            val db = mongoClient.getDatabase(ACCOUNTS_DB)
+            val collection = db.getCollection<AccountDocument>(ACCOUNTS_COLLECTION)
             log.info { "accounts collection: $collection" }
 
             val indexes = collection.listIndexes().map { it["name"] }.toSet()
             log.info { "indexes: $indexes" }
 
-            if (!indexes.contains("email_1")) {
+            if (!indexes.contains(EMAIL_INDEX)) {
                 val emailIndex = collection.createIndex(
-                    keys = Indexes.ascending("email"),
+                    keys = Indexes.ascending(EMAIL),
                     options = IndexOptions(),
                 )
                 log.info { "created indexes: $emailIndex" }
             }
 
-            if (!indexes.contains("accountId_1")) {
+            if (!indexes.contains(ACCOUNT_ID_INDEX)) {
                 val accountIdIndex = collection.createIndex(
-                    keys = Indexes.ascending("accountId"),
+                    keys = Indexes.ascending(ACCOUNT_ID),
                     options = IndexOptions(),
                 )
                 log.info { "created indexes: $accountIdIndex" }
             }
 
-
             val createdIndexes = collection.listIndexes().toSet()
             log.info { "createdIndexes: $createdIndexes" }
-        } catch (e: Exception) {
-            log.error { "error while creating mongo client: ${e.message}" }
         }
+            .onSuccess { log.info { "mongo successfully initialized" } }
+            .onFailure { log.error { "error while creating mongo client: ${it.message}" } }
     }
 
     private companion object {
@@ -56,5 +56,9 @@ class MongoInitializer(private val mongoClient: MongoClient) {
 
         private const val ACCOUNTS_COLLECTION = "accounts"
         private const val ACCOUNTS_DB = "accounts"
+        private const val EMAIL_INDEX = "email_1"
+        private const val ACCOUNT_ID_INDEX = "accountId_1"
+        private const val ACCOUNT_ID = "accountId"
+        private const val EMAIL = "email"
     }
 }

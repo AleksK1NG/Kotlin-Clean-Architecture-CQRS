@@ -8,15 +8,15 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 
 interface AccountProjectionRepository {
 
-    suspend fun createAccount(account: Account): Either<AppError, Account>
+    suspend fun save(account: Account): Either<AppError, Account>
 
-    suspend fun updateAccount(account: Account): Either<AppError, Account>
+    suspend fun update(account: Account): Either<AppError, Account>
 
-    suspend fun getAccountById(id: AccountId):Either<AppError, Account>
+    suspend fun getById(id: AccountId): Either<AppError, Account>
 
-    suspend fun getAccountByEmail(email: String): Either<AppError, Account>
+    suspend fun getByEmail(email: String): Either<AppError, Account>
 
-    suspend fun getAllAccounts(page: Int, size: Int): Either<AppError, AccountsList>
+    suspend fun getAll(page: Int, size: Int): Either<AppError, AccountsList>
 
     suspend fun upsert(account: Account): Either<AppError, Account>
 }

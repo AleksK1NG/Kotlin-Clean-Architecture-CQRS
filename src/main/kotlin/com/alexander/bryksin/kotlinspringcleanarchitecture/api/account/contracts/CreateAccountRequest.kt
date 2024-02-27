@@ -8,7 +8,7 @@ data class CreateAccountRequest(
     val personalInfo: PersonalInfoRequest,
     val address: AddressRequest,
 ) {
-    companion object {}
+    companion object
 }
 
 fun CreateAccountRequest.toCommand() = CreateAccountCommand(

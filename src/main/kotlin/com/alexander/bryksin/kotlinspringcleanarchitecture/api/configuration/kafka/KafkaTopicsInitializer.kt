@@ -15,7 +15,7 @@ class KafkaTopicsInitializer(
 
     @PostConstruct
     fun init() {
-        kotlin.runCatching {
+        runCatching {
             kafkaTopics.getTopics()
                 .map { NewTopic(it.name, it.partitions, it.replication.toShort()) }
                 .forEach {
