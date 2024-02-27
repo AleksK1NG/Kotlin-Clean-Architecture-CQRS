@@ -20,11 +20,11 @@ class KafkaProducerConfiguration(
         ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
         ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
         ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to ByteArraySerializer::class.java,
-        ProducerConfig.ACKS_CONFIG to "all",
-        ProducerConfig.RETRIES_CONFIG to 5,
-        ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 120000,
-        ProducerConfig.MAX_REQUEST_SIZE_CONFIG to 1068576,
-        ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG to 30000,
+        ProducerConfig.ACKS_CONFIG to ACKS_CONFIG,
+        ProducerConfig.RETRIES_CONFIG to RETRIES_CONFIG,
+        ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to DELIVERY_TIMEOUT_MS_CONFIG,
+        ProducerConfig.MAX_REQUEST_SIZE_CONFIG to MAX_REQUEST_SIZE_CONFIG,
+        ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG to REQUEST_TIMEOUT_MS_CONFIG,
     )
 
     @Bean
@@ -36,4 +36,12 @@ class KafkaProducerConfiguration(
             setObservationEnabled(true)
             setMicrometerEnabled(true)
         }
+
+    private companion object {
+        private const val ACKS_CONFIG = "all"
+        private const val RETRIES_CONFIG = 5
+        private const val DELIVERY_TIMEOUT_MS_CONFIG = 120000
+        private const val MAX_REQUEST_SIZE_CONFIG = 10685765
+        private const val REQUEST_TIMEOUT_MS_CONFIG = 30000
+    }
 }

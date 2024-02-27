@@ -6,7 +6,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.c
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 
 data class ChangeContactInfoRequest(val contactInfo: ContactInfoRequest) {
-    companion object {}
+    companion object
 }
 
 fun ChangeContactInfoRequest.toCommand(accountId: AccountId) = ChangeContactInfoCommand(

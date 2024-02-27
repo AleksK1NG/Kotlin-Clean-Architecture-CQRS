@@ -10,7 +10,7 @@ data class DepositBalanceRequest(
     val balance: BalanceRequest,
     @field:Size(min = 6, max = 255) val transactionId: String
 ) {
-    companion object {}
+    companion object
 }
 
 fun DepositBalanceRequest.toCommand(accountId: AccountId) = DepositBalanceCommand(

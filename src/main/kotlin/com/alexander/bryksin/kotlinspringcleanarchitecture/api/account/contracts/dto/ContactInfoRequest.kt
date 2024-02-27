@@ -5,8 +5,8 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Size
 
 data class ContactInfoRequest(
-    @field:Size(min = 6, max = 250) @field:Email() val email: String = "",
-    @field:Size(min = 6, max = 20) val phone: String = ""
+    @field:Size(min = 6, max = 250) @field:Email() val email: String,
+    @field:Size(min = 6, max = 20) val phone: String
 ) {
     companion object
 }

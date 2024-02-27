@@ -30,16 +30,6 @@ data class AccountCreatedEvent(
     }
 }
 
-
-fun AccountCreatedEvent.toOutboxEvent(data: ByteArray) = OutboxEvent(
-    aggregateId = aggregateId,
-    eventId = eventId.toUUID(),
-    eventType = ACCOUNT_CREATED_EVENT_V1,
-    timestamp = Instant.now(),
-    version = version,
-    data = data
-)
-
 fun AccountCreatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_CREATED_EVENT_V1,

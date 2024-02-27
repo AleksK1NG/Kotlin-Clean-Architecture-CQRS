@@ -35,7 +35,7 @@ class AccountCommandServiceImpl(
         emailVerifierClient.verifyEmail(command.contactInfo.email).bind()
 
         val (account, event) = tx.executeAndAwait {
-            val account = accountRepository.saveAccount(command.toAccount()).bind()
+            val account = accountRepository.save(command.toAccount()).bind()
             val event = outboxRepository.insert(account.toAccountCreatedEvent().toOutboxEvent(serializer)).bind()
             account to event
         }
@@ -47,9 +47,10 @@ class AccountCommandServiceImpl(
 
     override suspend fun handle(command: ChangeAccountStatusCommand): Either<AppError, Unit> = eitherScope(ctx) {
         val event = tx.executeAndAwait {
-            val foundAccount = accountRepository.getAccountById(command.accountId).bind()
+            val foundAccount = accountRepository.getById(command.accountId).bind()
             foundAccount.updateStatus(command.status).bind()
-            val account = accountRepository.updateAccount(foundAccount).bind()
+
+            val account = accountRepository.update(foundAccount).bind()
             val event = account.toStatusChangedEvent().toOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
@@ -59,9 +60,10 @@ class AccountCommandServiceImpl(
 
     override suspend fun handle(command: ChangeContactInfoCommand): Either<AppError, Unit> = eitherScope(ctx) {
         val event = tx.executeAndAwait {
-            val foundAccount = accountRepository.getAccountById(command.accountId).bind()
+            val foundAccount = accountRepository.getById(command.accountId).bind()
             foundAccount.changeContactInfo(command.contactInfo).bind()
-            val account = accountRepository.updateAccount(foundAccount).bind()
+
+            val account = accountRepository.update(foundAccount).bind()
             val event = account.toContactInfoChangedEvent().toOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
@@ -70,12 +72,13 @@ class AccountCommandServiceImpl(
     }
 
     override suspend fun handle(command: DepositBalanceCommand): Either<AppError, Unit> = eitherScope(ctx) {
-        paymentClient.verifyPaymentTransaction(command.accountId.string(), command.transactionId)
+        paymentClient.verifyPaymentTransaction(command.accountId.string(), command.transactionId).bind()
 
         val event = tx.executeAndAwait {
-            val foundAccount = accountRepository.getAccountById(command.accountId).bind()
+            val foundAccount = accountRepository.getById(command.accountId).bind()
             foundAccount.depositBalance(command.balance).bind()
-            val account = accountRepository.updateAccount(foundAccount).bind()
+
+            val account = accountRepository.update(foundAccount).bind()
             val event = account.toBalanceDepositedEvent(command.balance).toOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
@@ -84,12 +87,13 @@ class AccountCommandServiceImpl(
     }
 
     override suspend fun handle(command: WithdrawBalanceCommand): Either<AppError, Unit> = eitherScope(ctx) {
-        paymentClient.verifyPaymentTransaction(command.accountId.string(), command.transactionId)
+        paymentClient.verifyPaymentTransaction(command.accountId.string(), command.transactionId).bind()
 
         val event = tx.executeAndAwait {
-            val foundAccount = accountRepository.getAccountById(command.accountId).bind()
+            val foundAccount = accountRepository.getById(command.accountId).bind()
             foundAccount.withdrawBalance(command.balance).bind()
-            val account = accountRepository.updateAccount(foundAccount).bind()
+
+            val account = accountRepository.update(foundAccount).bind()
             val event = account.toBalanceWithdrawEvent(command.balance).toOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
@@ -99,9 +103,10 @@ class AccountCommandServiceImpl(
 
     override suspend fun handle(command: UpdatePersonalInfoCommand): Either<AppError, Unit> = eitherScope(ctx) {
         val event = tx.executeAndAwait {
-            val foundAccount = accountRepository.getAccountById(command.accountId).bind()
+            val foundAccount = accountRepository.getById(command.accountId).bind()
             foundAccount.changePersonalInfo(command.personalInfo).bind()
-            val account = accountRepository.updateAccount(foundAccount).bind()
+
+            val account = accountRepository.update(foundAccount).bind()
             val event = account.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
@@ -109,11 +114,10 @@ class AccountCommandServiceImpl(
         publisherScope.launch { publishOutboxEvent(event) }
     }
 
-
     private suspend fun publishOutboxEvent(event: OutboxEvent) =
         runSuspendCatching { outboxRepository.deleteWithLock(event) { eventPublisher.publish(event) } }
             .onFailure {
-                log.error { "Error while publishing outbox event: ${event.eventId}, error: ${it.message}" }
+                log.error { "error while publishing outbox event: ${event.eventId}, error: ${it.message}" }
             }
             .onSuccess { log.info { "outbox event has been published and deleted: $it" } }
 

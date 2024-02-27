@@ -204,11 +204,11 @@ class AccountController(
         accountQueryService.handle(GetAccountByEmailQuery(email)).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { okResponse(it) }
+        ifRight = { okResponse(it.toResponse()) }
     )
 
     @Operation(
-        method = "getAllAccounts", operationId = "getAccountByEmail", description = "Get all accounts",
+        method = "getAllAccounts", operationId = "getAllAccounts", description = "Get all accounts",
         responses = [
             ApiResponse(
                 responseCode = "200",

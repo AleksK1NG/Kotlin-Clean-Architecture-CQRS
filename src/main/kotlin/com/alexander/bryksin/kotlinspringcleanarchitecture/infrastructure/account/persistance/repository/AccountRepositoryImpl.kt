@@ -24,7 +24,7 @@ class AccountRepositoryImpl(
     private val dbClient: DatabaseClient
 ) : AccountRepository {
 
-    override suspend fun saveAccount(account: Account): Either<AppError, Account> = eitherScope(ctx) {
+    override suspend fun save(account: Account): Either<AppError, Account> = eitherScope<AppError, Account>(ctx) {
         dbClient.sql(INSERT_ACCOUNT_QUERY.trimMargin())
             .bindValues(account.withVersion(FIRST_VERSION).toPostgresEntityMap())
             .fetch()
@@ -34,9 +34,10 @@ class AccountRepositoryImpl(
 
         account
     }
+        .onLeft { log.error { "error while saving account: $it" } }
 
 
-    override suspend fun updateAccount(account: Account): Either<AppError, Account> = eitherScope(ctx) {
+    override suspend fun update(account: Account): Either<AppError, Account> = eitherScope(ctx) {
         dbClient.sql(OPTIMISTIC_UPDATE_QUERY.trimMargin())
             .bindValues(account.withUpdatedAt(Instant.now()).toPostgresEntityMap(withOptimisticLock = true))
             .fetch()
@@ -45,8 +46,9 @@ class AccountRepositoryImpl(
 
         account.incVersion().bind()
     }
+        .onLeft { log.error { "error while update account: $it" } }
 
-    override suspend fun getAccountById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
+    override suspend fun getById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
         dbClient.sql(GET_ACCOUNT_BY_ID_QUERY.trimMargin())
             .bind(ID_FIELD, id.id)
             .map { row, _ -> row.toAccount() }
@@ -54,6 +56,7 @@ class AccountRepositoryImpl(
             .also { log.debug { "get account by id: $it" } }
             ?: raise(AccountNotFoundError("account for id: $id not found"))
     }
+        .onLeft { log.error { "error while load account by id: $it" } }
 
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO

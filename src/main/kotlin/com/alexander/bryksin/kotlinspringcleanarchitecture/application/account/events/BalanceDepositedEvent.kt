@@ -42,14 +42,6 @@ fun Account.toBalanceDepositedEvent(newBalance: Balance): BalanceDepositedEvent 
     )
 }
 
-fun BalanceDepositedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
-    eventId = UUID.randomUUID(),
-    eventType = ACCOUNT_BALANCE_DEPOSITED_V1,
-    aggregateId = aggregateId,
-    data = data,
-    version = this.version,
-    timestamp = Instant.now(),
-)
 
 fun BalanceDepositedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = eventId.toUUID(),

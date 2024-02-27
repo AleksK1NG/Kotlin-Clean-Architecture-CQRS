@@ -6,7 +6,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.c
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 
 data class WithdrawBalanceRequest(val balance: BalanceRequest, val transactionId: String) {
-    companion object {}
+    companion object
 }
 
 fun WithdrawBalanceRequest.toCommand(accountId: AccountId) = WithdrawBalanceCommand(

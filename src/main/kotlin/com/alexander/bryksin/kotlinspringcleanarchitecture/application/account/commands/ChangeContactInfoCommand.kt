@@ -4,5 +4,5 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.ContactInfo
 
 data class ChangeContactInfoCommand(val accountId: AccountId, val contactInfo: ContactInfo) : AccountDomainCommand {
-    companion object {}
+    companion object
 }

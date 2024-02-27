@@ -42,14 +42,6 @@ fun Account.toBalanceWithdrawEvent(newBalance: Balance): BalanceWithdrawEvent {
     )
 }
 
-fun BalanceWithdrawEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
-    eventId = UUID.randomUUID(),
-    eventType = ACCOUNT_BALANCE_WITHDRAW_V1,
-    aggregateId = aggregateId,
-    data = data,
-    version = version,
-    timestamp = Instant.now(),
-)
 
 fun BalanceWithdrawEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

@@ -23,15 +23,15 @@ class AccountQueryServiceImpl(
 ) : AccountQueryService {
 
     override suspend fun handle(query: GetAccountByIdQuery): Either<AppError, Account> = eitherScope(ctx) {
-        accountRepository.getAccountById(query.id).bind()
+        accountRepository.getById(query.id).bind()
     }
 
     override suspend fun handle(query: GetAccountByEmailQuery): Either<AppError, Account> = eitherScope(ctx) {
-        accountProjectionRepository.getAccountByEmail(query.email).bind()
+        accountProjectionRepository.getByEmail(query.email).bind()
     }
 
     override suspend fun handle(query: GetAllAccountsQuery): Either<AppError, AccountsList> = eitherScope(ctx) {
-        accountProjectionRepository.getAllAccounts(page = query.page, size = query.size).bind()
+        accountProjectionRepository.getAll(page = query.page, size = query.size).bind()
     }
 
     private val ctx = CoroutineName(this::class.java.name) + Dispatchers.IO

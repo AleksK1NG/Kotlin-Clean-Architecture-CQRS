@@ -40,14 +40,6 @@ fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
     )
 }
 
-fun PersonalInfoUpdatedEvent.toOutboxEvent(data: ByteArray): OutboxEvent = OutboxEvent(
-    eventId = UUID.randomUUID(),
-    eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,
-    aggregateId = aggregateId,
-    data = data,
-    version = version,
-    timestamp = Instant.now(),
-)
 
 fun PersonalInfoUpdatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

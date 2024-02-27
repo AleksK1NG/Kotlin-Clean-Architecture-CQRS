@@ -24,7 +24,7 @@ class AccountEventHandlerServiceImpl(
 ) : AccountEventHandlerService {
 
     override suspend fun on(event: AccountCreatedEvent): Either<AppError, Unit> = eitherScope {
-        accountProjectionRepository.createAccount(event.toAccount()).bind()
+        accountProjectionRepository.save(event.toAccount()).bind()
     }
 
     override suspend fun on(event: BalanceDepositedEvent): Either<AppError, Unit> = eitherScope {
@@ -66,7 +66,7 @@ class AccountEventHandlerServiceImpl(
     ): Either<AppError, Account> = eitherScope {
         val foundAccount = findAndValidateVersion(accountId, eventVersion).bind()
         val accountToUpdate = block(foundAccount)
-        accountProjectionRepository.updateAccount(accountToUpdate).bind()
+        accountProjectionRepository.update(accountToUpdate).bind()
             .also { log.info { "mongo repository updated account: $it" } }
     }
 
@@ -74,7 +74,7 @@ class AccountEventHandlerServiceImpl(
         accountId: AccountId,
         eventVersion: Long
     ): Either<AppError, Account> = eitherScope {
-        val foundAccount = accountProjectionRepository.getAccountById(accountId).bind()
+        val foundAccount = accountProjectionRepository.getById(accountId).bind()
         validateVersion(foundAccount, eventVersion).bind()
         foundAccount
     }
