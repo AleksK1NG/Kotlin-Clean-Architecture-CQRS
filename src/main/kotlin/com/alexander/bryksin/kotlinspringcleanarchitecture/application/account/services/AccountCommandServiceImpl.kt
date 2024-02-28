@@ -13,7 +13,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.utils.runSuspendCatching
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
@@ -114,12 +113,12 @@ class AccountCommandServiceImpl(
         publisherScope.launch { publishOutboxEvent(event) }
     }
 
-    private suspend fun publishOutboxEvent(event: OutboxEvent) =
-        runSuspendCatching { outboxRepository.deleteWithLock(event) { eventPublisher.publish(event) } }
-            .onFailure {
-                log.error { "error while publishing outbox event: ${event.eventId}, error: ${it.message}" }
-            }
-            .onSuccess { log.info { "outbox event has been published and deleted: $it" } }
+
+    private suspend fun publishOutboxEvent(event: OutboxEvent): Either<AppError, OutboxEvent> = eitherScope {
+        outboxRepository.deleteWithLock(event) { eventPublisher.publish(event) }.bind()
+    }
+        .onRight { log.info { "outbox event has been published and deleted: $it" } }
+        .onLeft { log.error { "error while publishing outbox event: ${event.eventId}, error: $it" } }
 
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
@@ -129,4 +128,5 @@ class AccountCommandServiceImpl(
         private val log = KotlinLogging.logger { }
     }
 }
+
 
