@@ -16,13 +16,6 @@ fun ConsumerRecord<String, ByteArray>.info(withValue: Boolean = true): String {
         "topic: ${topic()} key: ${key()} partition: ${partition()} offset: ${offset()} timestamp: ${timestamp()}"
 }
 
-fun ConsumerRecord<String, ByteArray>.getRetryCount(): Int = try {
-    val retryCount = String(headers().lastHeader(EventProcessor.KAFKA_HEADERS_RETRY).value()).toInt()
-    retryCount
-} catch (e: Exception) {
-    0
-}
-
 fun ConsumerRecord<String, ByteArray>.getRetriesCount(): Result<Int> = runCatching {
     String(headers().lastHeader(EventProcessor.KAFKA_HEADERS_RETRY).value()).toInt()
 }

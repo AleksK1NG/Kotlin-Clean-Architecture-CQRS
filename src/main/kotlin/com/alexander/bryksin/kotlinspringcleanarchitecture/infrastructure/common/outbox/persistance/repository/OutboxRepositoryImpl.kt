@@ -58,16 +58,16 @@ class OutboxRepositoryImpl(
 
     override suspend fun deleteEventsWithLock(
         batchSize: Int,
-        callback: suspend (event: OutboxEvent) -> Unit
+        callback: suspend (event: OutboxEvent) -> Either<AppError, Unit>
     ): Either<AppError, Unit> = eitherScope(ctx) {
         tx.executeAndAwait {
             dbClient.sql(GET_OUTBOX_EVENTS_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
-                .bind("limit", batchSize)
+                .bind(LIMIT, batchSize)
                 .map { row, _ -> row.toOutboxEvent() }
                 .all()
                 .asFlow()
                 .onStart { log.info { "start publishing outbox events batch: $batchSize" } }
-                .onEach { callback(it) }
+                .onEach { callback(it).bind() }
                 .onEach { event -> deleteOutboxEvent(event).bind() }
                 .onCompletion { log.info { "completed publishing outbox events batch: $batchSize" } }
                 .collect()
@@ -76,7 +76,7 @@ class OutboxRepositoryImpl(
 
     private suspend fun deleteOutboxEvent(event: OutboxEvent): Either<AppError, Long> = eitherScope(ctx) {
         dbClient.sql(DELETE_OUTBOX_EVENT_BY_ID_QUERY)
-            .bindValues(mutableMapOf("eventId" to event.eventId))
+            .bindValues(mutableMapOf(EVENT_ID to event.eventId))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -89,6 +89,8 @@ class OutboxRepositoryImpl(
     private companion object {
         private val log = KotlinLogging.logger { }
         private const val ROW_EVENT_ID = "event_id"
+        private const val LIMIT = "limit"
+        private const val EVENT_ID = "eventId"
     }
 }
 

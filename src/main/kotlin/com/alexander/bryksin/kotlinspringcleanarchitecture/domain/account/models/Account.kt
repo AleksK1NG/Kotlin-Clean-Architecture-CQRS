@@ -113,7 +113,7 @@ class Account(
     }
 
     fun decVersion(amount: Long = 1): Either<AppError, Account> = either {
-        if (amount < 1)raise(InvalidVersion("invalid version: $amount"))
+        if (amount < 1) raise(InvalidVersion("invalid version: $amount"))
         version -= amount
         updatedAt = Instant.now()
         this@Account
