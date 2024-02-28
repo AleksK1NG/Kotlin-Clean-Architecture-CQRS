@@ -236,6 +236,13 @@ class EventProcessor(
             DuplicateKeyException::class.java,
             InvalidCurrencyException::class
         )
+        val unProcessableDomainErrors = setOf(
+            EmailValidationError::class.java,
+            InvalidBalanceError::class.java,
+            PaymentValidationError::class.java,
+            LowerEventVersionError::class.java,
+            SameEventVersionError::class.java,
+        )
         const val KAFKA_HEADERS_RETRY = "X-Kafka-Retry"
         private const val DEFAULT_RETRY_COUNT = 3
         private const val DLQ_ERROR_MESSAGE = "dlqErrorMessage"
@@ -249,11 +256,3 @@ class EventProcessor(
 internal fun isUnprocessableException(e: Exception, unprocessableExceptions: Set<Class<*>> = setOf()): Boolean {
     return (unprocessableExceptions.contains(e::class.java) || EventProcessor.dlqExceptions.contains(e::class.java))
 }
-
-internal val unProcessableDomainErrors = setOf(
-    EmailValidationError::class.java,
-    InvalidBalanceError::class.java,
-    PaymentValidationError::class.java,
-    LowerEventVersionError::class.java,
-    SameEventVersionError::class.java,
-)

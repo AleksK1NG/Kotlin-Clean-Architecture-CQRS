@@ -17,16 +17,6 @@ suspend fun <T> serviceScope(
     block: suspend CoroutineScope.() -> T
 ): T = block(scope + context)
 
-//suspend fun <L, R> eitherScope(
-//    context: CoroutineContext = EmptyCoroutineContext,
-//    block: suspend Raise<L>.(CoroutineScope) -> R
-//) = either {
-//    serviceScope {
-//        block(this + context)
-//    }
-//}
-
-
 suspend fun <L, R> eitherScope(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend EitherContext<L>.() -> R

@@ -12,7 +12,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import org.springframework.stereotype.Component
@@ -23,37 +22,37 @@ class AccountEventHandlerServiceImpl(
     private val accountProjectionRepository: AccountProjectionRepository
 ) : AccountEventHandlerService {
 
-    override suspend fun on(event: AccountCreatedEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: AccountCreatedEvent): Either<AppError, Unit> = eitherScope(ctx) {
         accountProjectionRepository.save(event.toAccount()).bind()
     }
 
-    override suspend fun on(event: BalanceDepositedEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: BalanceDepositedEvent): Either<AppError, Unit> = eitherScope(ctx) {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.depositBalance(event.balance).bind()
         }.bind()
     }
 
 
-    override suspend fun on(event: BalanceWithdrawEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: BalanceWithdrawEvent): Either<AppError, Unit> = eitherScope(ctx) {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.withdrawBalance(event.balance).bind()
         }.bind()
     }
 
-    override suspend fun on(event: PersonalInfoUpdatedEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: PersonalInfoUpdatedEvent): Either<AppError, Unit> = eitherScope(ctx) {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.changePersonalInfo(event.personalInfo).bind()
         }.bind()
     }
 
 
-    override suspend fun on(event: ContactInfoChangedEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: ContactInfoChangedEvent): Either<AppError, Unit> = eitherScope(ctx) {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.changeContactInfo(event.contactInfo).bind()
         }.bind()
     }
 
-    override suspend fun on(event: AccountStatusChangedEvent): Either<AppError, Unit> = eitherScope {
+    override suspend fun on(event: AccountStatusChangedEvent): Either<AppError, Unit> = eitherScope(ctx) {
         findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
             foundAccount.updateStatus(event.status).bind()
         }.bind()
@@ -63,7 +62,7 @@ class AccountEventHandlerServiceImpl(
         accountId: AccountId,
         eventVersion: Long,
         block: suspend (Account) -> Account
-    ): Either<AppError, Account> = eitherScope {
+    ): Either<AppError, Account> = eitherScope(ctx) {
         val foundAccount = findAndValidateVersion(accountId, eventVersion).bind()
         val accountToUpdate = block(foundAccount)
         accountProjectionRepository.update(accountToUpdate).bind()
@@ -73,13 +72,13 @@ class AccountEventHandlerServiceImpl(
     private suspend fun findAndValidateVersion(
         accountId: AccountId,
         eventVersion: Long
-    ): Either<AppError, Account> = eitherScope {
+    ): Either<AppError, Account> = eitherScope(ctx) {
         val foundAccount = accountProjectionRepository.getById(accountId).bind()
         validateVersion(foundAccount, eventVersion).bind()
         foundAccount
     }
 
-    private val scope = CoroutineScope(Job() + CoroutineName(this::class.java.name) + Dispatchers.IO)
+    private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 
     private companion object {
         private val log = KotlinLogging.logger { }

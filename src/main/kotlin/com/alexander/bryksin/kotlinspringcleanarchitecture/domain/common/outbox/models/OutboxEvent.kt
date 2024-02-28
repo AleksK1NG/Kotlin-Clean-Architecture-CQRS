@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.*
 
 data class OutboxEvent(
-    val eventId: UUID?,
+    val eventId: UUID,
     val eventType: String,
     val aggregateId: String,
     val data: ByteArray,

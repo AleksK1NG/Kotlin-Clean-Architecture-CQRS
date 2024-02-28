@@ -18,7 +18,7 @@ class OutboxScheduler(
     private val publisher: EventPublisher,
 ) {
 
-    @Value("\${scheduler.outbox.batchSize}")
+    @Value("\${schedulers.outbox.batchSize}")
     private var batchSize: Int = 30
 
     @Scheduled(

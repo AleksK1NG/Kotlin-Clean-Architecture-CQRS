@@ -20,6 +20,6 @@ interface OutboxRepository {
 
     suspend fun deleteEventsWithLock(
         batchSize: Int,
-        callback: suspend (event: OutboxEvent) -> Unit
+        callback: suspend (event: OutboxEvent) -> Either<AppError, Unit>
     ): Either<AppError, Unit>
 }

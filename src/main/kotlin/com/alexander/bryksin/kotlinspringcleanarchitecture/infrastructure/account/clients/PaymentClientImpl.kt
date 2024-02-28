@@ -14,9 +14,11 @@ Example implementation for demonstration purposes
 @Component
 class PaymentClientImpl : PaymentClient {
 
-    override suspend fun verifyPaymentTransaction(accountId: String, transactionId: String): Either<AppError, Unit> =
-        either {
-            if (accountId.isBlank() || transactionId.isBlank())
-                raise(InvalidTransactionError("invalid transaction id: $transactionId, accountId: $accountId"))
-        }
+    override suspend fun verifyPaymentTransaction(
+        accountId: String,
+        transactionId: String
+    ): Either<AppError, Unit> = either {
+        if (accountId.isBlank() || transactionId.isBlank())
+            raise(InvalidTransactionError("invalid transaction id: $transactionId, accountId: $accountId"))
+    }
 }
