@@ -2,17 +2,18 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contract
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands.CreateAccountCommand
+import jakarta.validation.Valid
 
 data class CreateAccountRequest(
-    val contactInfo: ContactInfoRequest,
-    val personalInfo: PersonalInfoRequest,
-    val address: AddressRequest,
+    @field:Valid val contactInfo: ContactInfoRequest,
+    @field:Valid val personalInfo: PersonalInfoRequest,
+    @field:Valid val address: AddressRequest,
 ) {
     companion object
 }
 
 fun CreateAccountRequest.toCommand() = CreateAccountCommand(
-   contactInfo = contactInfo.toContactInfo(),
+    contactInfo = contactInfo.toContactInfo(),
     personalInfo = personalInfo.toPersonalInfo(),
     address = address.toAddress(),
 )

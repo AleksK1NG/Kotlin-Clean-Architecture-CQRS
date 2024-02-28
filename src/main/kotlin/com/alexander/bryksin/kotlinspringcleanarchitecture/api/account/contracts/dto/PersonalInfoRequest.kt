@@ -4,8 +4,8 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import jakarta.validation.constraints.Size
 
 data class PersonalInfoRequest(
-    @field:Size(max = 10_000) val bio: String = "",
-    @field:Size(max = 500) val imageUrl: String = ""
+    @field:Size(max = 10_000, min = 6) val bio: String,
+    @field:Size(max = 500, min = 6) val imageUrl: String
 ) {
     companion object
 }

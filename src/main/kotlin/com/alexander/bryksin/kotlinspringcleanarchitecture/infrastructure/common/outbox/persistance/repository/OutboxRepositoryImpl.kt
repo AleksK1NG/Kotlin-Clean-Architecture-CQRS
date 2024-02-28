@@ -38,23 +38,6 @@ class OutboxRepositoryImpl(
         event
     }
 
-//    override suspend fun deleteWithLock(
-//        event: OutboxEvent,
-//        callback: suspend (event: OutboxEvent) -> Unit
-//    ): Either<AppError, OutboxEvent> = eitherScope {
-//        tx.executeAndAwait {
-//            dbClient.sql(GET_OUTBOX_EVENT_BY_ID_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
-//                .bindValues(mutableMapOf("eventId" to event.eventId))
-//                .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
-//                .one()
-//                .awaitSingleOrNull()
-//
-//            callback(event)
-//            deleteOutboxEvent(event).bind()
-//            event
-//        }
-//    }
-//
     override suspend fun deleteWithLock(
         event: OutboxEvent,
         callback: suspend (event: OutboxEvent) -> Either<AppError, Unit>

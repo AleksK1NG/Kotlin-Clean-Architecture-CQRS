@@ -4,8 +4,13 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.toBalance
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands.WithdrawBalanceCommand
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Size
 
-data class WithdrawBalanceRequest(val balance: BalanceRequest, val transactionId: String) {
+data class WithdrawBalanceRequest(
+    @field:Valid val balance: BalanceRequest,
+    @field:Size(min = 6, max = 255) val transactionId: String
+) {
     companion object
 }
 

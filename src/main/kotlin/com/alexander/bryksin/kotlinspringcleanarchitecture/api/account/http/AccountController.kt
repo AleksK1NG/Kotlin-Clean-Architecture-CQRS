@@ -1,6 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.*
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.controllerAdvice.ErrorHttpResponse
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAllAccountsQuery
@@ -8,16 +9,18 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.s
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountQueryService
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.Size
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -35,12 +38,17 @@ class AccountController(
         method = "createAccount", operationId = "createAccount", description = "Create new Account",
         responses = [
             ApiResponse(
+                description = "Create new Account",
                 responseCode = "201",
                 content = [Content(
-                    schema = Schema(
-                        implementation = AccountId::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = AccountId::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @PostMapping
@@ -56,12 +64,17 @@ class AccountController(
         method = "getAccountById", operationId = "getAccountById", description = "Get account by id",
         responses = [
             ApiResponse(
+                description = "Get account by id",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = AccountResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = AccountResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @GetMapping(path = ["{id}"])
@@ -76,12 +89,17 @@ class AccountController(
         method = "depositBalance", operationId = "depositBalance", description = "Deposit balance",
         responses = [
             ApiResponse(
+                description = "Deposit balance",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = BaseResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = BaseResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @PutMapping(path = ["/{id}/deposit"])
@@ -99,12 +117,17 @@ class AccountController(
         method = "withdrawBalance", operationId = "withdrawBalance", description = "Withdraw balance",
         responses = [
             ApiResponse(
+                description = "bad request response",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = BaseResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = BaseResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "Get all accounts with pagination bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @PutMapping(path = ["/{id}/withdraw"])
@@ -122,12 +145,17 @@ class AccountController(
         method = "updateStatus", operationId = "updateStatus", description = "Update account status",
         responses = [
             ApiResponse(
+                description = "Update account status",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = BaseResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = BaseResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @PutMapping(path = ["/{id}/status"])
@@ -145,12 +173,17 @@ class AccountController(
         method = "updatePersonalInfo", operationId = "updatePersonalInfo", description = "Update account info",
         responses = [
             ApiResponse(
+                description = "Update account info",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = BaseResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = BaseResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @PutMapping(path = ["/{id}/info/"])
@@ -168,12 +201,17 @@ class AccountController(
         method = "changeContactInfo", operationId = "changeContactInfo", description = "Update account contacts",
         responses = [
             ApiResponse(
+                description = "Update account contacts",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = BaseResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = BaseResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @PutMapping(path = ["/{id}/contacts/"])
@@ -191,16 +229,26 @@ class AccountController(
         method = "getAccountByEmail", operationId = "getAccountByEmail", description = "Get account by email",
         responses = [
             ApiResponse(
+                description = "Get account by email",
                 responseCode = "200",
                 content = [Content(
-                    schema = Schema(
-                        implementation = AccountResponse::class
-                    )
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = Schema(implementation = AccountResponse::class)
                 )]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
             )],
     )
     @GetMapping(path = ["/email/{email}"])
-    suspend fun getAccountByEmail(@PathVariable email: String): ResponseEntity<out Any> = eitherScope(ctx) {
+    suspend fun getAccountByEmail(
+        @PathVariable @Email @Size(
+            min = 6,
+            max = 255
+        ) email: String
+    ): ResponseEntity<out Any> = eitherScope(ctx) {
         accountQueryService.handle(GetAccountByEmailQuery(email)).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
@@ -211,13 +259,15 @@ class AccountController(
         method = "getAllAccounts", operationId = "getAllAccounts", description = "Get all accounts",
         responses = [
             ApiResponse(
+                description = "Get all accounts with pagination",
                 responseCode = "200",
-                content = [Content(
-                    schema = Schema(
-                        implementation = AccountsListResponse::class
-                    )
-                )]
-            )],
+                content = [Content(schema = Schema(implementation = AccountsListResponse::class))]
+            ),
+            ApiResponse(
+                description = "bad request response",
+                responseCode = "400",
+                content = [Content(schema = Schema(implementation = ErrorHttpResponse::class))]
+            )]
     )
     @GetMapping(path = ["/all"])
     suspend fun getAllAccounts(
@@ -233,7 +283,6 @@ class AccountController(
     private val ctx = Job() + CoroutineName(this::class.java.name)
 
     private companion object {
-        private val log = KotlinLogging.logger { }
         private val OK_RESPONSE = ResponseEntity.status(HttpStatus.OK).body(BaseResponse(status = HttpStatus.OK))
     }
 }
