@@ -64,12 +64,13 @@ class AccountProjectionRepositoryImpl(
 
         accountsCollection.findOneAndUpdate(
             filter,
-            account.incVersion().bind().toBsonUpdate(),
+            account.toBsonUpdate(),
             options
         )
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
+        .onRight { updated -> log.info { "updated account $updated" } }
         .onLeft { log.error { "error while upserting account: $it" } }
 
     override suspend fun getById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
