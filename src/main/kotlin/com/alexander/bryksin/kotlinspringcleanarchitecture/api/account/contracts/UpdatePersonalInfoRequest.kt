@@ -4,8 +4,9 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.toPersonalInfo
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands.UpdatePersonalInfoCommand
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
+import jakarta.validation.Valid
 
-data class UpdatePersonalInfoRequest(val personalInfo: PersonalInfoRequest) {
+data class UpdatePersonalInfoRequest(@field:Valid val personalInfo: PersonalInfoRequest) {
     companion object {}
 }
 
