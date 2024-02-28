@@ -13,6 +13,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.e
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import org.springframework.stereotype.Service
 
 
@@ -34,7 +35,7 @@ class AccountQueryServiceImpl(
         accountProjectionRepository.getAll(page = query.page, size = query.size).bind()
     }
 
-    private val ctx = CoroutineName(this::class.java.name) + Dispatchers.IO
+    private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 
     private companion object {
         private val log = KotlinLogging.logger { }
