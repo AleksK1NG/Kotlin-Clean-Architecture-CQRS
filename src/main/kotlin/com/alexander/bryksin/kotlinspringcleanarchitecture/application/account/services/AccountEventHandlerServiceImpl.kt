@@ -66,8 +66,9 @@ class AccountEventHandlerServiceImpl(
         val foundAccount = findAndValidateVersion(accountId, eventVersion).bind()
         val accountToUpdate = block(foundAccount)
         accountProjectionRepository.update(accountToUpdate).bind()
-            .also { log.info { "mongo repository updated account: $it" } }
     }
+        .onRight { log.info { "mongo repository updated account: $it" } }
+        .onLeft { log.error { "error while updating account: $it" } }
 
     private suspend fun findAndValidateVersion(
         accountId: AccountId,
