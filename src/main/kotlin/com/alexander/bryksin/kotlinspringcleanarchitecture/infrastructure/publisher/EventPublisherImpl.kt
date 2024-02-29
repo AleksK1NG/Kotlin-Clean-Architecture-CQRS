@@ -1,6 +1,8 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.publisher
 
 import arrow.core.Either
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
@@ -16,14 +18,15 @@ import org.springframework.stereotype.Component
 @Component
 class EventPublisherImpl(
     private val kafkaTemplate: KafkaTemplate<String, ByteArray>,
-    private val serializer: Serializer
+    private val serializer: Serializer,
+    private val kafkaTopics: KafkaTopics
 ) : EventPublisher {
 
     override suspend fun publish(
         event: OutboxEvent,
         headers: Map<String, ByteArray>
     ): Either<AppError, Unit> = eitherScope<AppError, Unit> {
-        val msg = ProducerRecord(event.kafkaTopic(), event.aggregateId, event.data)
+        val msg = ProducerRecord(event.kafkaTopic(kafkaTopics), event.aggregateId, event.data)
         headers.forEach { (key, value) -> msg.headers().add(key, value) }
         kafkaTemplate.send(msg).await()
     }
@@ -79,3 +82,14 @@ class EventPublisherImpl(
         private val log = KotlinLogging.logger { }
     }
 }
+
+internal fun OutboxEvent.kafkaTopic(kafkaTopics: KafkaTopics) = when (eventType) {
+    AccountCreatedEvent.ACCOUNT_CREATED_EVENT_V1 -> kafkaTopics.accountCreated.name
+    AccountStatusChangedEvent.ACCOUNT_STATUS_CHANGED_V1 -> kafkaTopics.accountStatusChanged.name
+    BalanceDepositedEvent.ACCOUNT_BALANCE_DEPOSITED_V1 -> kafkaTopics.accountBalanceDeposited.name
+    BalanceWithdrawEvent.ACCOUNT_BALANCE_WITHDRAW_V1 -> kafkaTopics.accountBalanceWithdraw.name
+    ContactInfoChangedEvent.ACCOUNT_CONTACT_INFO_CHANGED_V1 -> kafkaTopics.accountContactInfoChanged.name
+    PersonalInfoUpdatedEvent.ACCOUNT_PERSONAL_INFO_UPDATED_V1 -> kafkaTopics.accountInfoUpdated.name
+    else -> kafkaTopics.deadLetterQueue.name
+}
+
