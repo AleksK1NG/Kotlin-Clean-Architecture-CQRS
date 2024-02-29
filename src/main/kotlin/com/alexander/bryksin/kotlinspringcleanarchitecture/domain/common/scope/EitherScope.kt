@@ -22,7 +22,7 @@ suspend fun <L, R> eitherScope(
     block: suspend EitherContext<L>.() -> R
 ) = either {
     serviceScope {
-        block(EitherCoroutine<L>(raiseErr = this@either, scope = this@serviceScope + context))
+        block(EitherCoroutine(raiseErr = this@either, scope = this@serviceScope + context))
     }
 }
 

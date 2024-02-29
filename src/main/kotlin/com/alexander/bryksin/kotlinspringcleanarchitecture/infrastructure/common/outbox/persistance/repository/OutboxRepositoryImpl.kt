@@ -38,13 +38,14 @@ class OutboxRepositoryImpl(
         event
     }
 
+
     override suspend fun deleteWithLock(
         event: OutboxEvent,
         callback: suspend (event: OutboxEvent) -> Either<AppError, Unit>
     ): Either<AppError, OutboxEvent> = eitherScope {
         tx.executeAndAwait {
             dbClient.sql(GET_OUTBOX_EVENT_BY_ID_FOR_UPDATE_SKIP_LOCKED_QUERY.trimMargin())
-                .bindValues(mutableMapOf("eventId" to event.eventId))
+                .bindValues(mutableMapOf(EVENT_ID to event.eventId))
                 .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
                 .one()
                 .awaitSingleOrNull()
@@ -82,7 +83,6 @@ class OutboxRepositoryImpl(
             .awaitSingle()
             .also { rowsDeleted -> log.info { "eventId: ${event.eventId} rowsDeleted: $rowsDeleted" } }
     }
-
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 
