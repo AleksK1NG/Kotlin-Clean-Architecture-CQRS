@@ -88,26 +88,28 @@ class AccountProjectionRepositoryImpl(
     }
         .onLeft { log.error { "error while loading account by email: $it" } }
 
-    override suspend fun getAll(page: Int, size: Int): Either<AppError, AccountsList> =
-        eitherScope<AppError, AccountsList>(ctx) {
-            parZip(coroutineContext, {
-                accountsCollection.find()
-                    .skip(page * size)
-                    .limit(size)
-                    .map { it.toAccount() }
-                    .toList()
-            }, {
-                accountsCollection.find().count()
-            }) { list, totalCount ->
-                AccountsList(
-                    page = page,
-                    size = size,
-                    totalCount = totalCount,
-                    accountsList = list
-                )
-            }
+    override suspend fun getAll(
+        page: Int,
+        size: Int
+    ): Either<AppError, AccountsList> = eitherScope<AppError, AccountsList>(ctx) {
+        parZip(coroutineContext, {
+            accountsCollection.find()
+                .skip(page * size)
+                .limit(size)
+                .map { it.toAccount() }
+                .toList()
+        }, {
+            accountsCollection.find().count()
+        }) { list, totalCount ->
+            AccountsList(
+                page = page,
+                size = size,
+                totalCount = totalCount,
+                accountsList = list
+            )
         }
-            .onLeft { log.error { "error while loading all accounts: $it" } }
+    }
+        .onLeft { log.error { "error while loading all accounts: $it" } }
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
 

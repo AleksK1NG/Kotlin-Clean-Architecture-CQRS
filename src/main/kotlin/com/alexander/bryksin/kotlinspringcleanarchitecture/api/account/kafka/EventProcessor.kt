@@ -130,6 +130,7 @@ class EventProcessor(
                 data = consumerRecord.value(),
                 headers = dlqHeaders
             )
+
             logDlqMsg(retryCount, maxRetryCount, consumerRecord)
             ack.acknowledge()
             restoreProjection(event)
@@ -169,6 +170,7 @@ class EventProcessor(
                         data = event,
                         headers = consumerRecord.getKafkaRetryHeaders(err = err)
                     )
+
                     ack.acknowledge()
                     restoreProjection(event)
                     return@fold
@@ -180,9 +182,11 @@ class EventProcessor(
                     data = event,
                     headers = consumerRecord.getKafkaRetryHeaders(err = err)
                 )
+
                 log.warn { "published to retry: ${consumerRecord.info(withValue = true)}" }
                 ack.acknowledge()
             },
+
             ifRight = {
                 log.info { "record successfully processed: ${consumerRecord.info()}" }
                 ack.acknowledge()
@@ -229,6 +233,7 @@ class EventProcessor(
 
     companion object {
         private val log = KotlinLogging.logger { }
+
         val dlqExceptions = setOf(
             SerializationException::class.java,
             LowerEventVersionException::eventVersion,
@@ -236,6 +241,7 @@ class EventProcessor(
             DuplicateKeyException::class.java,
             InvalidCurrencyException::class
         )
+
         val unProcessableDomainErrors = setOf(
             EmailValidationError::class.java,
             InvalidBalanceError::class.java,
@@ -243,12 +249,14 @@ class EventProcessor(
             LowerEventVersionError::class.java,
             SameEventVersionError::class.java,
         )
+
         const val KAFKA_HEADERS_RETRY = "X-Kafka-Retry"
+        const val KAFKA_HEADERS_ERROR_MESSAGE = "error_message"
+
         private const val DEFAULT_RETRY_COUNT = 3
         private const val DLQ_ERROR_MESSAGE = "dlqErrorMessage"
         private const val BASE_RETRY_COUNT = 0
         private const val RETRY_COUNT_STEP = 1
-        const val KAFKA_HEADERS_ERROR_MESSAGE = "error_message"
     }
 }
 
