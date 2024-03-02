@@ -2,6 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.value
 
 import java.util.*
 
-data class AccountId(val id: UUID? = null) {
+@JvmInline
+value class AccountId(val id: UUID? = null) {
     fun string() = id?.toString() ?: ""
 }

@@ -52,7 +52,7 @@ fun AccountCreatedEvent.toAccount() = Account(
 fun Account.toAccountCreatedEvent(): AccountCreatedEvent {
     return AccountCreatedEvent(
         accountId = accountId,
-        aggregateId =accountId.id.toString(),
+        aggregateId = accountId.id.toString(),
         contactInfo = contactInfo,
         personalInfo = personalInfo,
         address = address,
@@ -64,4 +64,9 @@ fun Account.toAccountCreatedEvent(): AccountCreatedEvent {
         eventType = ACCOUNT_CREATED_EVENT_V1,
         timestamp = Instant.now()
     )
+}
+
+
+fun Account.toAccountCreatedOutboxEvent(serializer: Serializer): OutboxEvent {
+    return this.toAccountCreatedEvent().toOutboxEvent(serializer)
 }

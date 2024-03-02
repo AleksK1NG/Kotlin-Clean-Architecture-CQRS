@@ -41,6 +41,11 @@ fun Account.toPersonalInfoUpdatedEvent(): PersonalInfoUpdatedEvent {
 }
 
 
+fun Account.toPersonalInfoUpdatedOutboxEvent(serializer: Serializer): OutboxEvent {
+    return this.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer)
+}
+
+
 fun PersonalInfoUpdatedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),
     eventType = ACCOUNT_PERSONAL_INFO_UPDATED_V1,

@@ -35,7 +35,7 @@ class AccountCommandServiceImpl(
 
         val (account, event) = tx.executeAndAwait {
             val account = accountRepository.save(command.toAccount()).bind()
-            val event = outboxRepository.insert(account.toAccountCreatedEvent().toOutboxEvent(serializer)).bind()
+            val event = outboxRepository.insert(account.toAccountCreatedOutboxEvent(serializer)).bind()
             account to event
         }
 
@@ -50,7 +50,7 @@ class AccountCommandServiceImpl(
             foundAccount.updateStatus(command.status).bind()
 
             val account = accountRepository.update(foundAccount).bind()
-            val event = account.toStatusChangedEvent().toOutboxEvent(serializer)
+            val event = account.toStatusChangedOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
 
@@ -63,7 +63,7 @@ class AccountCommandServiceImpl(
             foundAccount.changeContactInfo(command.contactInfo).bind()
 
             val account = accountRepository.update(foundAccount).bind()
-            val event = account.toContactInfoChangedEvent().toOutboxEvent(serializer)
+            val event = account.toContactInfoChangedOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
 
@@ -78,7 +78,7 @@ class AccountCommandServiceImpl(
             foundAccount.depositBalance(command.balance).bind()
 
             val account = accountRepository.update(foundAccount).bind()
-            val event = account.toBalanceDepositedEvent(command.balance).toOutboxEvent(serializer)
+            val event = account.toBalanceWithdrawOutboxEvent(command.balance, serializer)
             outboxRepository.insert(event).bind()
         }
 
@@ -93,7 +93,7 @@ class AccountCommandServiceImpl(
             foundAccount.withdrawBalance(command.balance).bind()
 
             val account = accountRepository.update(foundAccount).bind()
-            val event = account.toBalanceWithdrawEvent(command.balance).toOutboxEvent(serializer)
+            val event = account.toBalanceWithdrawOutboxEvent(command.balance, serializer)
             outboxRepository.insert(event).bind()
         }
 
@@ -106,7 +106,7 @@ class AccountCommandServiceImpl(
             foundAccount.changePersonalInfo(command.personalInfo).bind()
 
             val account = accountRepository.update(foundAccount).bind()
-            val event = account.toPersonalInfoUpdatedEvent().toOutboxEvent(serializer)
+            val event = account.toPersonalInfoUpdatedOutboxEvent(serializer)
             outboxRepository.insert(event).bind()
         }
 

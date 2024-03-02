@@ -42,6 +42,10 @@ fun Account.toBalanceWithdrawEvent(newBalance: Balance): BalanceWithdrawEvent {
     )
 }
 
+fun Account.toBalanceWithdrawOutboxEvent(newBalance: Balance, serializer: Serializer): OutboxEvent {
+    return this.toBalanceWithdrawEvent(newBalance).toOutboxEvent(serializer)
+}
+
 
 fun BalanceWithdrawEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

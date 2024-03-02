@@ -42,6 +42,9 @@ fun Account.toBalanceDepositedEvent(newBalance: Balance): BalanceDepositedEvent 
     )
 }
 
+fun Account.toBalanceDepositedOutboxEvent(newBalance: Balance, serializer: Serializer): OutboxEvent {
+    return this.toBalanceDepositedEvent(newBalance).toOutboxEvent(serializer)
+}
 
 fun BalanceDepositedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = eventId.toUUID(),

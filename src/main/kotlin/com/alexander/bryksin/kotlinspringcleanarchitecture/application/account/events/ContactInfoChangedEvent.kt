@@ -42,6 +42,10 @@ fun Account.toContactInfoChangedEvent(): ContactInfoChangedEvent {
     )
 }
 
+fun Account.toContactInfoChangedOutboxEvent(serializer: Serializer): OutboxEvent {
+    return this.toContactInfoChangedEvent().toOutboxEvent(serializer)
+}
+
 
 fun ContactInfoChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

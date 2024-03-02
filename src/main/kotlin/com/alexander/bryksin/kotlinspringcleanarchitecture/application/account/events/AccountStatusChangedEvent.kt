@@ -40,6 +40,9 @@ fun Account.toStatusChangedEvent(): AccountStatusChangedEvent {
     )
 }
 
+fun Account.toStatusChangedOutboxEvent(serializer: Serializer): OutboxEvent {
+    return this.toStatusChangedEvent().toOutboxEvent(serializer)
+}
 
 fun AccountStatusChangedEvent.toOutboxEvent(serializer: Serializer) = OutboxEvent(
     eventId = UUID.randomUUID(),

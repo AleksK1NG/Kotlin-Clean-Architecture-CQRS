@@ -32,6 +32,14 @@ fun Account.toResponse() = AccountResponse(
     postCode = address.postCode,
     amount = balance.amount,
     currency = balance.balanceCurrency,
-    balance = "${balance.amount.toFloat() / 100} ${balance.balanceCurrency}",
+    balance = "${balance.amount.toBalanceString()} ${balance.balanceCurrency}",
     status = status
 )
+
+fun Long.toBalanceString(): String {
+    if (this < 100) return "0.$this"
+    val str = this.toString()
+    val cents = str.substring(str.lastIndex - 1..str.lastIndex)
+    val dollars = str.substring(0..<str.lastIndex)
+    return "${dollars}.$cents"
+}
