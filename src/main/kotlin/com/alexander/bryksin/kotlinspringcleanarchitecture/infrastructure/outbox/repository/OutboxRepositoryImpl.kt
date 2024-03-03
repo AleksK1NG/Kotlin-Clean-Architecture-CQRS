@@ -1,9 +1,9 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.common.outbox.persistance.repository
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.outbox.repository
 
 import arrow.core.Either
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName

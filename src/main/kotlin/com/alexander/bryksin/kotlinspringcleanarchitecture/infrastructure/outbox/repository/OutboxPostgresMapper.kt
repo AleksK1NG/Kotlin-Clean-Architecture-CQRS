@@ -1,6 +1,6 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.common.outbox.persistance.repository
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.outbox.repository
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import io.r2dbc.spi.Row
 import java.math.BigInteger
 import java.time.Instant

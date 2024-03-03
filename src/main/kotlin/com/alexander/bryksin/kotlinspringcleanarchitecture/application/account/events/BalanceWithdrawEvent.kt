@@ -5,7 +5,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.se
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Balance
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import java.time.Instant
 import java.util.*
 

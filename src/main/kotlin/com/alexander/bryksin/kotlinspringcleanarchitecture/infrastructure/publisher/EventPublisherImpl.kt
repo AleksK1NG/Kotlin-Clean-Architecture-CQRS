@@ -6,7 +6,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.e
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.future.await

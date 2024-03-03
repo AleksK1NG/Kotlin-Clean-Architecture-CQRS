@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.common.outbox.persistance.repository
+package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.outbox.repository
 
 internal const val GET_OUTBOX_EVENTS_FOR_UPDATE_SKIP_LOCKED_QUERY = """SELECT ot.event_id, ot.event_type, ot.aggregate_id, ot.data, ot.version, ot.timestamp
                 |FROM microservices.outbox_table ot 

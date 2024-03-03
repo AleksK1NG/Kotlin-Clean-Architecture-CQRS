@@ -6,12 +6,12 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.e
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.EmailVerifierClient
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.clients.PaymentClient
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.outbox.persistance.OutboxRepository
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*

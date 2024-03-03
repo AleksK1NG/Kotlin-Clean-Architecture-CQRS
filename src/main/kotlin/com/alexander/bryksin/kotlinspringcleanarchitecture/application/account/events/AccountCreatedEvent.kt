@@ -7,7 +7,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.Address
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.ContactInfo
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.PersonalInfo
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import java.time.Instant
 import java.util.*
 

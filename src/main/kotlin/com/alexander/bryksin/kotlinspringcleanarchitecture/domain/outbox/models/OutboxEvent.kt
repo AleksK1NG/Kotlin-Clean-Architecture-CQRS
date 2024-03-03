@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models
+package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models
 
 import java.time.Instant
 import java.util.*

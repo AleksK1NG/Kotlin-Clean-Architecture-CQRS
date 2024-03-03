@@ -2,7 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.p
 
 import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.outbox.models.OutboxEvent
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 
 interface EventPublisher {
 
