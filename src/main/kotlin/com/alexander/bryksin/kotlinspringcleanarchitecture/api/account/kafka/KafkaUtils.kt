@@ -1,6 +1,5 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.EventProcessor
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.EventProcessor.Companion.KAFKA_HEADERS_ERROR_MESSAGE
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent

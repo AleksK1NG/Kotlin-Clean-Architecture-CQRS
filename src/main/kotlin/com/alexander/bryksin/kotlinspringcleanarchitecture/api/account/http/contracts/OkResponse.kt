@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts
 
 import org.springframework.http.HttpStatus
 

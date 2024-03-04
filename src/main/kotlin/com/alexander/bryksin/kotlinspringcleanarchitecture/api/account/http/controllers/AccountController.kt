@@ -1,7 +1,7 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.controllers
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.*
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.controllerAdvice.ErrorHttpResponse
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts.*
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.controllerAdvice.ErrorHttpResponse
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByEmailQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAllAccountsQuery

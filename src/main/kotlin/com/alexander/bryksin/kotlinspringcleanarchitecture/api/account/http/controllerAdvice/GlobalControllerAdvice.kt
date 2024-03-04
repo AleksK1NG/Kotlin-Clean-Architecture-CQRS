@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.controllerAdvice
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.controllerAdvice
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.dao.DuplicateKeyException

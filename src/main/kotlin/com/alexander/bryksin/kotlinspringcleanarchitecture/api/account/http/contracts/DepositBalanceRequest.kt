@@ -1,7 +1,7 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.BalanceRequest
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.toBalance
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts.dto.BalanceRequest
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts.dto.toBalance
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands.DepositBalanceCommand
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import jakarta.validation.Valid

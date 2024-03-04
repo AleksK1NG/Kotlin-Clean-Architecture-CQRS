@@ -42,6 +42,7 @@ class AccountProjectionRepositoryImpl(
         log.info { "account insertOneResult: ${insertResult}, account: $account" }
         account
     }
+        .onRight { log.debug { "saved account id: ${account.accountId}" } }
         .onLeft { log.error { "error while saving account: $it" } }
 
     override suspend fun update(account: Account): Either<AppError, Account> = eitherScope(ctx) {
@@ -56,6 +57,8 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
+
+        .onRight { log.debug { "updated account id: ${account.accountId}" } }
         .onLeft { log.error { "error while updating account: $it" } }
 
     override suspend fun upsert(account: Account): Either<AppError, Account> = eitherScope(ctx) {
@@ -71,7 +74,7 @@ class AccountProjectionRepositoryImpl(
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
         .onRight { updated -> log.info { "updated account $updated" } }
-        .onLeft { log.error { "error while upserting account: $it" } }
+        .onLeft { log.error { "error while upsert account id: ${account.accountId} error: $it" } }
 
     override suspend fun getById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
         accountsCollection.find<AccountDocument>(eq(ACCOUNT_ID, id.string()))
@@ -79,6 +82,7 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: $id not found"))
     }
+        .onRight { log.debug { "found account: $it" } }
         .onLeft { log.error { "error while loading account by id: $it" } }
 
     override suspend fun getByEmail(email: String): Either<AppError, Account> = eitherScope(ctx) {
@@ -86,6 +90,7 @@ class AccountProjectionRepositoryImpl(
         accountsCollection.find(filter).firstOrNull()?.toAccount()
             ?: raise(AccountNotFoundError("account with email: $email not found"))
     }
+        .onRight { log.debug { "found account: $it" } }
         .onLeft { log.error { "error while loading account by email: $it" } }
 
     override suspend fun getAll(
@@ -109,6 +114,7 @@ class AccountProjectionRepositoryImpl(
             )
         }
     }
+        .onRight { log.debug { "loaded account list: ${it.accountsList.size} page: $page, size: $size" } }
         .onLeft { log.error { "error while loading all accounts: $it" } }
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO

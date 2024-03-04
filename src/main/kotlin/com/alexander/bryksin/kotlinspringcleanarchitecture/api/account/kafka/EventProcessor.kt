@@ -1,7 +1,6 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 
 import arrow.core.Either
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.kafkaUtils.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
@@ -14,7 +13,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.pu
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.SerializationException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.*
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidCurrencyException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -109,7 +107,7 @@ class EventProcessor(
         retryTopic: String,
     ) {
         val (err, ack, consumerRecord, deserializationClazz) = errorHandlerParams
-        log.error { "error while processing record: ${consumerRecord.info(withValue = false)}, error: ${err.message}" }
+        log.error { "error while processing record: ${consumerRecord.info(withValue = true)}, error: ${err.message}" }
 
         val event = runCatching<T> { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
             .onFailure { log.error { "serialization error: ${it.message}" } }
@@ -161,7 +159,7 @@ class EventProcessor(
     ) {
         handle(event).fold(
             ifLeft = { err ->
-                if (unProcessableDomainErrors.contains(err::class.java) || consumerRecord.retryCount() >= maxRetryCount) {
+                if (isUnprocessableMessage(err, consumerRecord, maxRetryCount)) {
                     log.error { "unprocessable domain error: $err" }
 
                     publisher.publish(
@@ -218,6 +216,7 @@ class EventProcessor(
         ifRight = { log.info { "projection restored for event: $event" } }
     )
 
+
     private fun processContext(context: CoroutineContext = EmptyCoroutineContext): CoroutineContext =
         Job() + CoroutineName(this::class.java.name) + context
 
@@ -239,12 +238,13 @@ class EventProcessor(
             LowerEventVersionException::eventVersion,
             SameEventVersionException::class.java,
             DuplicateKeyException::class.java,
-            InvalidCurrencyException::class
         )
 
         val unProcessableDomainErrors = setOf(
             EmailValidationError::class.java,
             InvalidBalanceError::class.java,
+            InvalidBalanceAmount::class.java,
+            InvalidBalanceCurrency::class.java,
             PaymentValidationError::class.java,
             LowerEventVersionError::class.java,
             SameEventVersionError::class.java,
@@ -263,4 +263,12 @@ class EventProcessor(
 
 internal fun isUnprocessableException(e: Exception, unprocessableExceptions: Set<Class<*>> = setOf()): Boolean {
     return (unprocessableExceptions.contains(e::class.java) || EventProcessor.dlqExceptions.contains(e::class.java))
+}
+
+internal fun isUnprocessableMessage(
+    err: AppError,
+    consumerRecord: ConsumerRecord<String, ByteArray>,
+    maxRetryCount: Int
+): Boolean {
+    return EventProcessor.unProcessableDomainErrors.contains(err::class.java) || consumerRecord.retryCount() >= maxRetryCount
 }

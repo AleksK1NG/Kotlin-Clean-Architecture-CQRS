@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.filters
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.filters
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.core.annotation.Order

@@ -1,3 +1,0 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions
-
-sealed interface AccountDomainException

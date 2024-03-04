@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts.dto
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.ContactInfo
 import jakarta.validation.constraints.Email

@@ -3,8 +3,8 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.outbo
 import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -33,9 +33,7 @@ class OutboxRepositoryImpl(
             .map { row, _ -> row.get(ROW_EVENT_ID, String::class.java) }
             .one()
             .awaitSingle()
-            .also { log.info { "saved eventId: $it" } }
-
-        event
+            .let { event }
     }
 
 

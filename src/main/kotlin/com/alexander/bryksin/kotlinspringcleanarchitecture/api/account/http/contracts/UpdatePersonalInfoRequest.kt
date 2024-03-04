@@ -1,7 +1,7 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.PersonalInfoRequest
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.dto.toPersonalInfo
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts.dto.PersonalInfoRequest
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts.dto.toPersonalInfo
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.commands.UpdatePersonalInfoCommand
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.AccountId
 import jakarta.validation.Valid

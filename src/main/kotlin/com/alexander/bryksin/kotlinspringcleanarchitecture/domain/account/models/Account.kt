@@ -2,10 +2,7 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.model
 
 import arrow.core.Either
 import arrow.core.raise.either
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.InvalidBalanceError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.InvalidVersion
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.exceptions.InvalidVersionException
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.*
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueObjects.*
 import java.time.Instant
 
@@ -53,8 +50,8 @@ class Account(
     }
 
     fun depositBalance(newBalance: Balance): Either<AppError, Account> = either {
-        if (balance.balanceCurrency != newBalance.balanceCurrency) raise(InvalidBalanceError("invalid balance: $newBalance"))
-        if (newBalance.amount < 0) raise(InvalidBalanceError("invalid balance: $newBalance"))
+        if (balance.balanceCurrency != newBalance.balanceCurrency) raise(InvalidBalanceCurrency("invalid currency: $newBalance"))
+        if (newBalance.amount < 0) raise(InvalidBalanceAmount("invalid balance amount: $newBalance"))
 
         balance = balance.copy(amount = (balance.amount + newBalance.amount))
         updatedAt = Instant.now()
@@ -63,7 +60,8 @@ class Account(
     }
 
     fun withdrawBalance(newBalance: Balance): Either<AppError, Account> = either {
-        if (balance.balanceCurrency != newBalance.balanceCurrency) raise(InvalidBalanceError("invalid balance: $newBalance"))
+        if (balance.balanceCurrency != newBalance.balanceCurrency) raise(InvalidBalanceCurrency("invalid currency: $newBalance"))
+        if (newBalance.amount < 0) raise(InvalidBalanceAmount("invalid balance amount: $newBalance"))
 
         val newAmount = (balance.amount - newBalance.amount)
         if ((newAmount) < 0) raise(InvalidBalanceError("invalid balance: $newBalance"))
@@ -106,7 +104,6 @@ class Account(
     }
 
     fun withVersion(amount: Long = 1): Account {
-        if (amount < 0) throw InvalidVersionException(accountId, amount)
         version = amount
         updatedAt = Instant.now()
         return this

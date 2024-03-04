@@ -1,7 +1,6 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.contracts
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.contracts.BaseResponse
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.common.controllerAdvice.ErrorHttpResponse
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.http.controllerAdvice.ErrorHttpResponse
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -82,6 +81,22 @@ internal fun mapErrorToResponse(err: AppError): ResponseEntity<*> {
         )
 
         is InvalidTransactionError -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ErrorHttpResponse(
+                status = HttpStatus.BAD_REQUEST.value(),
+                message = err.msg,
+                timestamp = Instant.now().toString()
+            )
+        )
+
+        is InvalidBalanceAmount -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ErrorHttpResponse(
+                status = HttpStatus.BAD_REQUEST.value(),
+                message = err.msg,
+                timestamp = Instant.now().toString()
+            )
+        )
+
+        is InvalidBalanceCurrency -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ErrorHttpResponse(
                 status = HttpStatus.BAD_REQUEST.value(),
                 message = err.msg,
