@@ -3,8 +3,6 @@ package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
 import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.events.*
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.LowerEventVersionException
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.exceptions.SameEventVersionException
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.persistance.AccountProjectionRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.queries.GetAccountByIdQuery
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.services.AccountEventHandlerService
@@ -235,8 +233,6 @@ class EventProcessor(
 
         val dlqExceptions = setOf(
             SerializationException::class.java,
-            LowerEventVersionException::eventVersion,
-            SameEventVersionException::class.java,
             DuplicateKeyException::class.java,
         )
 
