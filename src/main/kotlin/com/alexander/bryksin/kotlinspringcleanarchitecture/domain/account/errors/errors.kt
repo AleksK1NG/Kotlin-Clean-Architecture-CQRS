@@ -19,3 +19,5 @@ data class GenericAppError(
     val cause: Throwable? = null,
     val exceptionClazz: Class<*>? = null
 ) : AppError
+
+data class SerializationError(val msg: String) : AppError

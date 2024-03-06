@@ -52,13 +52,14 @@ class AccountController(
             )],
     )
     @PostMapping
-    suspend fun createAccount(@Valid @RequestBody request: CreateAccountRequest): ResponseEntity<out Any> =
-        eitherScope(ctx) {
-            accountCommandService.handle(request.toCommand()).bind()
-        }.fold(
-            ifLeft = { mapErrorToResponse(it) },
-            ifRight = { createdResponse(it) }
-        )
+    suspend fun createAccount(
+        @Valid @RequestBody request: CreateAccountRequest
+    ): ResponseEntity<out Any> = eitherScope(ctx) {
+        accountCommandService.handle(request.toCommand()).bind()
+    }.fold(
+        ifLeft = { mapErrorToResponse(it) },
+        ifRight = { createdResponse(it) }
+    )
 
     @Operation(
         method = "getAccountById", operationId = "getAccountById", description = "Get account by id",

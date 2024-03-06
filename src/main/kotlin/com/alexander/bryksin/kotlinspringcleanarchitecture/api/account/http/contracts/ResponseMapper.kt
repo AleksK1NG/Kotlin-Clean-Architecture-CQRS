@@ -103,6 +103,14 @@ internal fun mapErrorToResponse(err: AppError): ResponseEntity<*> {
                 timestamp = Instant.now().toString()
             )
         )
+
+        is SerializationError -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ErrorHttpResponse(
+                status = HttpStatus.BAD_REQUEST.value(),
+                message = err.msg,
+                timestamp = Instant.now().toString()
+            )
+        )
     }
 }
 

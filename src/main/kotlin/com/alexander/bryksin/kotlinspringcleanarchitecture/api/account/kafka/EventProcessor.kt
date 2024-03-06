@@ -54,37 +54,38 @@ class EventProcessor(
         onError: OnErrorHandler<T> = { log.error { it.error.message } },
         onSuccess: suspend (T) -> Unit
     ) = runBlocking(processContext(context)) {
+        log.info { consumerRecord.info() }
 
-        try {
-            log.info { consumerRecord.info() }
+        runCatching {
             val event = serializer.deserialize(consumerRecord.value(), deserializationClazz)
             onSuccess(event)
-        } catch (e: Exception) {
-            log.error { "error while processing event: ${e.message}, data: ${consumerRecord.info()}" }
+        }
+            .onFailure { e: Throwable ->
+                log.error { "error while processing event: ${e.message}, data: ${consumerRecord.info()}" }
 
-            if (isUnprocessableException(e, unprocessableExceptions)) {
-                log.warn { "publishing to DLQ: ${e.message}, data: ${consumerRecord.info()}" }
+                if (isUnprocessableException(e, unprocessableExceptions)) {
+                    log.warn { "publishing to DLQ: ${e.message}, data: ${consumerRecord.info()}" }
 
-                publisher.publish(
-                    topic = kafkaTopics.deadLetterQueue.name,
-                    key = consumerRecord.key(),
-                    data = consumerRecord.value(),
-                    headers = consumerRecord.headersToMap()
+                    publisher.publish(
+                        topic = kafkaTopics.deadLetterQueue.name,
+                        key = consumerRecord.key(),
+                        data = consumerRecord.value(),
+                        headers = consumerRecord.headersToMap()
+                    )
+
+                    ack.acknowledge()
+                    return@runBlocking
+                }
+
+                val errorHandlerParams = ErrorHandlerParams(
+                    error = e,
+                    ack = ack,
+                    consumerRecord = consumerRecord,
+                    deserializationClazz = deserializationClazz
                 )
 
-                ack.acknowledge()
-                return@runBlocking
+                onError(errorHandlerParams)
             }
-
-            val errorHandlerParams = ErrorHandlerParams(
-                error = e,
-                ack = ack,
-                consumerRecord = consumerRecord,
-                deserializationClazz = deserializationClazz
-            )
-
-            onError(errorHandlerParams)
-        }
     }
 
     fun <T : Any> errorRetryHandler(
@@ -108,16 +109,20 @@ class EventProcessor(
         log.error { "error while processing record: ${consumerRecord.info(withValue = true)}, error: ${err.message}" }
 
         val event = runCatching<T> { serializer.deserialize(consumerRecord.value(), deserializationClazz) }
-            .onFailure { log.error { "serialization error: ${it.message}" } }
+            .onFailure {
+                log.error { "serialization error: ${it.message}" }
+                publishToDlq(it, consumerRecord)
+                ack.acknowledge()
+            }
             .onSuccess { log.info { "serialized message: $it" } }
-            .getOrThrow()
+            .getOrNull() ?: return
 
         val retryCount = consumerRecord.getRetriesCount().getOrDefault(BASE_RETRY_COUNT)
-        val retryHeadersMap = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
-        log.info { "retry count: $retryCount - map: $${String(retryHeadersMap[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
+        val retryHeaders = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
+        log.info { "retry count: $retryCount, key: ${consumerRecord.key()}" }
 
         if (retryCount >= maxRetryCount) {
-            val dlqHeaders = retryHeadersMap.toMutableMap()
+            val dlqHeaders = retryHeaders.toMutableMap()
             dlqHeaders[DLQ_ERROR_MESSAGE] = err.message?.toByteArray(Charsets.UTF_8) ?: byteArrayOf()
 
             publisher.publishBytes(
@@ -133,14 +138,11 @@ class EventProcessor(
             return
         }
 
-        val mergedHeaders = consumerRecord.mergeHeaders(retryHeadersMap)
-        log.info { "merged headers retry: ${String(mergedHeaders[KAFKA_HEADERS_RETRY] ?: byteArrayOf())}" }
-
         publisher.publish(
             topic = retryTopic,
             key = consumerRecord.key(),
             data = event,
-            headers = mergedHeaders
+            headers = consumerRecord.mergeHeaders(retryHeaders)
         )
 
         log.warn { "published retry topic: $retryTopic, event: $event" }
@@ -182,7 +184,6 @@ class EventProcessor(
                 log.warn { "published to retry: ${consumerRecord.info(withValue = true)}" }
                 ack.acknowledge()
             },
-
             ifRight = {
                 log.info { "record successfully processed: ${consumerRecord.info()}" }
                 ack.acknowledge()
@@ -205,8 +206,8 @@ class EventProcessor(
     internal suspend fun restoreProjection(event: Any) = eitherScope {
         if (event !is DomainEvent) return@eitherScope
 
-        val accountId = AccountId(event.aggregateId.toUUID())
-        val account = accountQueryService.handle(GetAccountByIdQuery(accountId)).bind()
+        val query = GetAccountByIdQuery(AccountId(event.aggregateId.toUUID()))
+        val account = accountQueryService.handle(query).bind()
         val savedAccount = accountProjectionRepository.upsert(account).bind()
         log.info { "restored account: $savedAccount" }
     }.fold(
@@ -226,6 +227,23 @@ class EventProcessor(
         log.error {
             "retry: $retryCount of $maxRetryCount exceed, published to dlq: ${kafkaTopics.deadLetterQueue.name} data: ${consumerRecord.info()}"
         }
+    }
+
+
+    private suspend fun publishToDlq(err: Throwable, consumerRecord: ConsumerRecord<String, ByteArray>) {
+        val retryCount = consumerRecord.getRetriesCount().getOrDefault(BASE_RETRY_COUNT)
+        val retryHeaders = buildRetryCountHeader(retryCount + RETRY_COUNT_STEP)
+        val dlqHeaders = retryHeaders.toMutableMap()
+        dlqHeaders[DLQ_ERROR_MESSAGE] = err.message?.toByteArray(Charsets.UTF_8) ?: byteArrayOf()
+
+        publisher.publishBytes(
+            topic = kafkaTopics.deadLetterQueue.name,
+            key = consumerRecord.key(),
+            data = consumerRecord.value(),
+            headers = dlqHeaders
+        )
+
+        log.error { "published to dlq: ${consumerRecord.info()}, err: ${err.message}" }
     }
 
     companion object {
@@ -257,7 +275,7 @@ class EventProcessor(
 }
 
 
-internal fun isUnprocessableException(e: Exception, unprocessableExceptions: Set<Class<*>> = setOf()): Boolean {
+internal fun isUnprocessableException(e: Throwable, unprocessableExceptions: Set<Class<*>> = setOf()): Boolean {
     return (unprocessableExceptions.contains(e::class.java) || EventProcessor.dlqExceptions.contains(e::class.java))
 }
 

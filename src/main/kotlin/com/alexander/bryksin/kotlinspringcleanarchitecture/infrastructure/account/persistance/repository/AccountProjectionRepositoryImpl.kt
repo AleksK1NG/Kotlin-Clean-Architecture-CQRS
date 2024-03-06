@@ -58,7 +58,7 @@ class AccountProjectionRepositoryImpl(
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
 
-        .onRight { log.debug { "updated account id: ${account.accountId}" } }
+        .onRight { log.debug { "updated account id: ${it.accountId}" } }
         .onLeft { log.error { "error while updating account: $it" } }
 
     override suspend fun upsert(account: Account): Either<AppError, Account> = eitherScope(ctx) {
@@ -73,7 +73,7 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
-        .onRight { updated -> log.info { "updated account $updated" } }
+        .onRight { log.info { "updated account $it" } }
         .onLeft { log.error { "error while upsert account id: ${account.accountId} error: $it" } }
 
     override suspend fun getById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {

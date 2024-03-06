@@ -27,34 +27,32 @@ class AccountEventHandlerServiceImpl(
     }
 
     override suspend fun on(event: BalanceDepositedEvent): Either<AppError, Unit> = eitherScope(ctx) {
-        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.depositBalance(event.balance).bind()
+        findAndUpdateAccountById(event.accountId, event.version) { account ->
+            account.depositBalance(event.balance).bind()
         }.bind()
     }
 
-
     override suspend fun on(event: BalanceWithdrawEvent): Either<AppError, Unit> = eitherScope(ctx) {
-        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.withdrawBalance(event.balance).bind()
+        findAndUpdateAccountById(event.accountId, event.version) { account ->
+            account.withdrawBalance(event.balance).bind()
         }.bind()
     }
 
     override suspend fun on(event: PersonalInfoUpdatedEvent): Either<AppError, Unit> = eitherScope(ctx) {
-        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.changePersonalInfo(event.personalInfo).bind()
+        findAndUpdateAccountById(event.accountId, event.version) { account ->
+            account.changePersonalInfo(event.personalInfo).bind()
         }.bind()
     }
 
-
     override suspend fun on(event: ContactInfoChangedEvent): Either<AppError, Unit> = eitherScope(ctx) {
-        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.changeContactInfo(event.contactInfo).bind()
+        findAndUpdateAccountById(event.accountId, event.version) { account ->
+            account.changeContactInfo(event.contactInfo).bind()
         }.bind()
     }
 
     override suspend fun on(event: AccountStatusChangedEvent): Either<AppError, Unit> = eitherScope(ctx) {
-        findAndUpdateAccountById(event.accountId, event.version) { foundAccount ->
-            foundAccount.updateStatus(event.status).bind()
+        findAndUpdateAccountById(event.accountId, event.version) { account ->
+            account.updateStatus(event.status).bind()
         }.bind()
     }
 
