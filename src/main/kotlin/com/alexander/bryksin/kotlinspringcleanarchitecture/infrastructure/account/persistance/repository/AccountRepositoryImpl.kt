@@ -53,9 +53,9 @@ class AccountRepositoryImpl(
             .bind(ID_FIELD, id.id)
             .map { row, _ -> row.toAccount() }
             .awaitSingleOrNull()
-            .also { log.debug { "get account by id: $it" } }
             ?: raise(AccountNotFoundError("account for id: $id not found"))
     }
+        .onRight { log.debug { "get account by id: $it" } }
         .onLeft { log.error { "error while load account by id: $it" } }
 
 

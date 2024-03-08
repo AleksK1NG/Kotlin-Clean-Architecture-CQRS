@@ -1,4 +1,4 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.processor
 
 import arrow.core.Either
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.configuration.kafka.KafkaTopics
@@ -88,7 +88,7 @@ class EventProcessor(
             }
     }
 
-    fun <T : Any> errorRetryHandler(
+    fun <T : Any> retryHandler(
         retryTopic: String,
         maxRetryCount: Int = DEFAULT_RETRY_COUNT,
     ): OnErrorHandler<T> =

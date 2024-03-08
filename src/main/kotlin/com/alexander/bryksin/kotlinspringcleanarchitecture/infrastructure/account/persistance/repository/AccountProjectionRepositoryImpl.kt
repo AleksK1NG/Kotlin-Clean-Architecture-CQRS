@@ -39,7 +39,7 @@ class AccountProjectionRepositoryImpl(
 
     override suspend fun save(account: Account): Either<AppError, Account> = eitherScope<AppError, Account>(ctx) {
         val insertResult = accountsCollection.insertOne(account.toDocument())
-        log.info { "account insertOneResult: ${insertResult}, account: $account" }
+        log.info { "account insertOneResult: $insertResult, account: $account" }
         account
     }
         .onRight { log.debug { "saved account id: ${account.accountId}" } }

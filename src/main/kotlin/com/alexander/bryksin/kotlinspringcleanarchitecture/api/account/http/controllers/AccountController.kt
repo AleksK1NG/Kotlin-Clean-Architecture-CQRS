@@ -58,7 +58,7 @@ class AccountController(
         accountCommandService.handle(request.toCommand()).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { createdResponse(it) }
+        ifRight = { ResponseEntity.status(HttpStatus.CREATED).body(it) }
     )
 
     @Operation(
@@ -83,7 +83,7 @@ class AccountController(
         accountQueryService.handle(GetAccountByIdQuery(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { okResponse(it.toResponse()) }
+        ifRight = { ResponseEntity.ok(it.toResponse()) }
     )
 
     @Operation(
@@ -111,7 +111,7 @@ class AccountController(
         accountCommandService.handle(request.toCommand(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { OK_RESPONSE }
+        ifRight = { okResponse(it) }
     )
 
     @Operation(
@@ -139,7 +139,7 @@ class AccountController(
         accountCommandService.handle(request.toCommand(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { OK_RESPONSE }
+        ifRight = { okResponse(it) }
     )
 
     @Operation(
@@ -167,7 +167,7 @@ class AccountController(
         accountCommandService.handle(request.toCommand(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { OK_RESPONSE }
+        ifRight = { okResponse(it) }
     )
 
     @Operation(
@@ -195,7 +195,7 @@ class AccountController(
         accountCommandService.handle(request.toCommand(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { OK_RESPONSE }
+        ifRight = { okResponse(it) }
     )
 
     @Operation(
@@ -223,7 +223,7 @@ class AccountController(
         accountCommandService.handle(request.toCommand(AccountId(id))).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { OK_RESPONSE }
+        ifRight = { okResponse(it) }
     )
 
     @Operation(
@@ -253,7 +253,7 @@ class AccountController(
         accountQueryService.handle(GetAccountByEmailQuery(email)).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { okResponse(it.toResponse()) }
+        ifRight = { ResponseEntity.ok(it.toResponse()) }
     )
 
     @Operation(
@@ -278,13 +278,9 @@ class AccountController(
         accountQueryService.handle(GetAllAccountsQuery(page = page, size = size)).bind()
     }.fold(
         ifLeft = { mapErrorToResponse(it) },
-        ifRight = { okResponse(it.toHttpResponse()) }
+        ifRight = { ResponseEntity.ok(it.toHttpResponse()) }
     )
 
     private val ctx = Job() + CoroutineName(this::class.java.name)
-
-    private companion object {
-        private val OK_RESPONSE = ResponseEntity.status(HttpStatus.OK).body(BaseResponse(status = HttpStatus.OK))
-    }
 }
 

@@ -1,6 +1,6 @@
-package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka
+package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.processor
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.EventProcessor.Companion.KAFKA_HEADERS_ERROR_MESSAGE
+import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.processor.EventProcessor.Companion.KAFKA_HEADERS_ERROR_MESSAGE
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import org.apache.kafka.clients.consumer.ConsumerRecord

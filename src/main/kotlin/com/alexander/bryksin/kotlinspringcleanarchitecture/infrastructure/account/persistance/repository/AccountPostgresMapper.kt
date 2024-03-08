@@ -9,7 +9,7 @@ import java.util.*
 
 internal fun Account.toPostgresEntityMap(withOptimisticLock: Boolean = false): MutableMap<String, *> {
     val map = mutableMapOf(
-        "id" to accountId?.id,
+        "id" to accountId.id,
         "email" to contactInfo.email,
         "phone" to contactInfo.phone,
         "country" to address.country,
