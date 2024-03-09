@@ -7,7 +7,7 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.valueO
 import java.time.Instant
 
 class Account(
-    var accountId: AccountId = AccountId(),
+    val accountId: AccountId = AccountId(),
 ) {
     var contactInfo: ContactInfo = ContactInfo()
         private set
@@ -22,10 +22,10 @@ class Account(
 
     var version: Long = 0
         private set
-
     var updatedAt: Instant? = null
+        private set
     var createdAt: Instant? = null
-
+        private set
 
     constructor(
         accountId: AccountId = AccountId(),
@@ -37,8 +37,7 @@ class Account(
         version: Long = 0,
         updatedAt: Instant? = null,
         createdAt: Instant? = null
-    ) : this() {
-        this.accountId = accountId
+    ) : this(accountId) {
         this.personalInfo = personalInfo
         this.contactInfo = contactInfo
         this.address = address
