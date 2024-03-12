@@ -56,7 +56,7 @@ springdoc:
 
 schedulers:
   outbox:
-    enable: false
+    enable: true
     initialDelayMillis: 3000
     fixedRate: 1000
     batchSize: 10

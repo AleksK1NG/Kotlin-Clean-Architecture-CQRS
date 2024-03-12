@@ -57,7 +57,6 @@ class AccountProjectionRepositoryImpl(
             ?.toAccount()
             ?: raise(AccountNotFoundError("account with id: ${account.accountId} not found"))
     }
-
         .onRight { log.debug { "updated account id: ${it.accountId}" } }
         .onLeft { log.error { "error while updating account: $it" } }
 

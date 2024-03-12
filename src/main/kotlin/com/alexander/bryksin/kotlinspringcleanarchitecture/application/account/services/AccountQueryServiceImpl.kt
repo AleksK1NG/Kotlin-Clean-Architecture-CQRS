@@ -10,7 +10,6 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.q
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.models.Account
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
-import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,8 +35,4 @@ class AccountQueryServiceImpl(
     }
 
     private val ctx = Job() + CoroutineName(this::class.java.name) + Dispatchers.IO
-
-    private companion object {
-        private val log = KotlinLogging.logger { }
-    }
 }

@@ -34,6 +34,7 @@ class AccountRepositoryImpl(
 
         account
     }
+        .onRight { log.debug { "saved account: $it" } }
         .onLeft { log.error { "error while saving account: $it" } }
 
 
@@ -46,6 +47,7 @@ class AccountRepositoryImpl(
 
         account.incVersion().bind()
     }
+        .onRight { log.debug { "updated account: $it" } }
         .onLeft { log.error { "error while update account: $it" } }
 
     override suspend fun getById(id: AccountId): Either<AppError, Account> = eitherScope(ctx) {
