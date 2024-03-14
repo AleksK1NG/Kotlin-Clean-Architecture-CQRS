@@ -5,6 +5,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.4"
 	kotlin("jvm") version "1.9.22"
 	kotlin("plugin.spring") version "1.9.22"
+	id("com.google.cloud.tools.jib") version "3.4.1"
 }
 
 group = "com.alexander.bryksin"
@@ -67,6 +68,32 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("io.projectreactor:reactor-test")
 	testImplementation("org.springframework.kafka:spring-kafka-test")
+}
+
+
+jib {
+	setAllowInsecureRegistries(true)
+	from {
+		image = "azul/zulu-openjdk:21-latest"
+		platforms {
+			platform {
+				architecture = "arm64"
+				os = "linux"
+			}
+//			platform {
+//				architecture = "amd64"
+//				os = "linux"
+//			}
+		}
+	}
+	to {
+		image = "alexanderbryksin/kotlin-clean-architecture-app"
+		tags = setOf("1.0.0")
+	}
+	container {
+		creationTime.set("USE_CURRENT_TIMESTAMP")
+		ports = listOf("8080", "8081")
+	}
 }
 
 tasks.withType<KotlinCompile> {

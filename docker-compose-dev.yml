@@ -1,0 +1,193 @@
+version: "3.9"
+
+services:
+  account_microservice:
+    image: alexanderbryksin/kotlin-clean-architecture-app:latest
+    container_name: account_microservice
+    platform: linux/arm64
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    environment:
+      - SPRING_APPLICATION_NAME=account_microservice
+      - SERVER_PORT=8080
+      - SPRING_R2DBC_URL=r2dbc:postgresql://host.docker.internal:5432/microservices
+      - SPRING_FLYWAY_URL=jdbc:postgresql://host.docker.internal:5432/microservices
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:29092
+      - MONGO_MONGO_URI=mongodb://mongo:mongo@host.docker.internal:27017/?maxPoolSize=20&w=majority
+      - MONGO_MONGOURI=mongodb://mongo:mongo@host.docker.internal:27017/?maxPoolSize=20&w=majority
+      - OTLP_URL=http://host.docker.internal:4318/v1/metrics
+#      - OTLP_URL=docker.internal:4318/v1/metrics
+      - OTLP_TRACING=http://host.docker.internal:4318/v1/traces
+#      - OTLP_TRACING=docker.internal:4318/v1/traces
+      - JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75"
+    depends_on:
+      - microservices_postgresql
+      - kafka-ui
+      - zipkin-all-in-one
+      - jaeger-all-in-one
+      - mongodb
+      - zoo1
+      - grafana
+      - kafka1
+      - otel-collector
+      - tempo
+      - prometheus
+    networks: [ "microservices" ]
+
+  microservices_postgresql:
+    image: postgres:latest
+    container_name: microservices_postgresql
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=microservices
+      - POSTGRES_HOST=5432
+    command: -p 5432
+    volumes:
+      - ./docker_data/microservices_pgdata:/var/lib/postgresql/data
+    networks: [ "microservices" ]
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGODB_DATABASE: microservices
+    networks: [ "microservices" ]
+
+  zoo1:
+    image: confluentinc/cp-zookeeper:7.6.0
+    hostname: zoo1
+    container_name: zoo1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zoo1:2888:3888
+    volumes:
+      - "./docker_data/zookeeper:/zookeeper"
+    networks: [ "microservices" ]
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.6.0
+    hostname: kafka1
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "9999:9999"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092,DOCKER://host.docker.internal:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    depends_on:
+      - zoo1
+    volumes:
+      - "./docker_data/kafka_data:/kafka"
+    networks: [ "microservices" ]
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - "8086:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka1:19092
+    networks: [ "microservices" ]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.82.0
+    restart: always
+    command:
+      - --config=/etc/otelcol-contrib/otel-collector.yml
+    volumes:
+      - ./docker/collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
+    ports:
+      - "1888:1888" # pprof extension
+      - "8888:8888" # Prometheus metrics exposed by the collector
+      - "8889:8889" # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP http receiver
+      - "55679:55679" # zpages extension
+    depends_on:
+      - jaeger-all-in-one
+      - zipkin-all-in-one
+    networks: [ "microservices" ]
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: always
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks: [ "microservices" ]
+
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./docker/tempo/tempo.yml:/etc/tempo.yml
+    ports:
+      - "3200:3200"   # tempo
+      - "4317"  # otlp grpc
+    networks: [ "microservices" ]
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    volumes:
+      - ./docker/grafana/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    ports:
+      - "3000:3000"
+    networks: [ "microservices" ]
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    restart: always
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+    networks: [ "microservices" ]
+
+  # Zipkin
+  zipkin-all-in-one:
+    image: openzipkin/zipkin:latest
+    restart: always
+    ports:
+      - "9411:9411"
+    networks: [ "microservices" ]
+
+networks:
+  microservices:
+    name: microservices

@@ -35,10 +35,10 @@ management:
   otlp:
     metrics:
       export:
-        url: http://localhost:4318/v1/metrics
+        url: http://host.docker.internal:4318/v1/metrics
         step: 1s
     tracing:
-      endpoint: http://localhost:4318/v1/traces
+      endpoint: http://host.docker.internal:4318/v1/traces
   tracing:
     sampling:
       probability: 1.0
