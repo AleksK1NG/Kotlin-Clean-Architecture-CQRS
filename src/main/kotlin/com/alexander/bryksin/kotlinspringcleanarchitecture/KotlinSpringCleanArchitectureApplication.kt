@@ -14,6 +14,5 @@ import reactor.core.publisher.Hooks
 class KotlinSpringCleanArchitectureApplication
 
 fun main(args: Array<String>) {
-	Hooks.enableAutomaticContextPropagation()
 	runApplication<KotlinSpringCleanArchitectureApplication>(*args)
 }
