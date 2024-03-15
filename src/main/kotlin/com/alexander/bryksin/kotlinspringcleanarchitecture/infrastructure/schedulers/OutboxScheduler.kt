@@ -1,7 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.infrastructure.schedulers
 
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
+import com.alexander.bryksin.kotlinspringcleanarchitecture.application.outbox.persistance.OutboxRepository
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -29,7 +29,7 @@ class OutboxScheduler(
         eitherScope {
             outboxRepository.deleteEventsWithLock(batchSize) { publisher.publish(it) }.bind()
         }.fold(
-            ifLeft = { err -> log.error { "error while publishing scheduler outbox events: $err" } },
+            ifLeft = { log.error { "error while publishing scheduler outbox events: $it" } },
             ifRight = { log.info { "outbox scheduler published events" } }
         )
     }
