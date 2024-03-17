@@ -1,8 +1,10 @@
-<img src="https://svgshare.com/i/13rC.svg" width="45%" height="auto" style="display: block; margin: 0 auto" alt="Arch"/>
+<p align="center">
+    <img src="https://svgshare.com/i/13rC.svg" width="45%" height="auto" alt="Arch"/>
+</p>
 
 In this project implemented the microservice using **Clean Architecture and CQRS**.
 A tech stack used **Kotlin**, **Spring WebFlux** with **coroutines**,**Postgres** and **MongoDB**,
-**Kafka** as a message broker and [**Arrow-kt**](https://arrow-kt.io/)functional library
+**Kafka** as a message broker and [**Arrow-kt**](https://arrow-kt.io/) functional library
 which like the documentation says brings idiomatic functional programming to Kotlin.
 
 **Clean Architecture** is one of the more popular software design approaches, it follows the principles of Dependency
@@ -17,8 +19,7 @@ implementation details.
 
 <img src="https://i.postimg.cc/9fqVxz6f/cqrs-2024-03-06-1437.png" alt="CQRS_img"/>
 
-[**CQRS**](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) stands for **Command and
-QueryResponsibility Segregation**, a pattern that separates reads and writes into different models, using commands to
+[**CQRS**](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs) stands for **Command and QueryResponsibility Segregation**, a pattern that separates reads and writes into different models, using commands to
 update data, and queries to read data. Using CQRS, you should have a strict separation between the write model and the
 read model. Those two models should be processed by separate objects and not be conceptually linked together. Those
 objects are not physical storage structures but are, for example, command handlers and query handlers. They’re not
@@ -56,7 +57,7 @@ the outside world and responsible for:
 * Works with framework specific configuration setup
 * Works on top of the application layer
 
-<img src="https://i.postimg.cc/JhsKQvL1/api-main.png" alt="api_layer"/>
+<img src="https://i.postimg.cc/JhsKQvL1/api-main.png" alt="api_layer" width="40%" height="auto" />
 
 [**Swagger UI**](http://localhost:8080/webjars/swagger-ui/index.html#)
 
@@ -143,7 +144,7 @@ application core like a Domain layer and is responsible for:
 * Fetch domain objects
 * Manipulating domain objects
 
-<img src="https://i.postimg.cc/9QSsVW85/application-main.png" alt="Application layer"/>
+<img src="https://i.postimg.cc/9QSsVW85/application-main.png" alt="Application layer" width="35%" height="auto"/>
 
 The **application** layer **AccountCommandService** has the business logic, which runs required business rules validations,
 then applies changes to the domain aggregate, persists domain objects in the database, produces the domain events, and
@@ -226,7 +227,7 @@ responsibilities of the domain layer:
 * Executing the application business logic
 * Enforcing the business rules
 
-<img src="https://i.postimg.cc/4dGLNnpM/domain-full.png" alt="Domain layer"/>
+<img src="https://i.postimg.cc/4dGLNnpM/domain-full.png" alt="Domain layer" width="40%" height="auto"/>
 
 **Domain models** have **data and behavior** and represent the domain.
 We have two approaches for designing - **rich** and **anemic** domain models.
@@ -346,9 +347,8 @@ for:
 * Has actual implementations of the interfaces from the application layer
 * Identity concerns
 
-<img src="https://i.postimg.cc/0yqJ4mvL/infrastructure-main.png" alt="Infrastructure layer"/>
+<img src="https://i.postimg.cc/0yqJ4mvL/infrastructure-main.png" alt="Infrastructure layer" width="40%" height="auto"/>
 
-<img src="https://i.postimg.cc/cL2fdJpS/pg-schema.png" alt="pg_schema"/>
 
 At the **Infrastructure layer** we have implementations of the application layer interfaces. As the main write database
 used **PostgreSQL** with [**r2dbc**](https://spring.io/projects/spring-data-r2dbc) reactive driver, and **DatabaseClient
@@ -401,10 +401,11 @@ class AccountRepositoryImpl(
     }
 }
 ```
+<img src="https://i.postimg.cc/cL2fdJpS/pg-schema.png" alt="pg_schema" width="50%" height="auto"/>
 
 Important detail about **outbox repository realisation**:
 
-<img src="https://i.postimg.cc/pVh8Hw9Y/select-for-update.png" alt="Select_for_update"/>
+<img src="https://i.postimg.cc/pVh8Hw9Y/select-for-update.png" alt="Select_for_update" width="65%" height="auto"/>
 
 The **outbox repository**, important detail here is to be able to handle the case of multiple pod instances processing in
 parallel outbox table, of course, we have idempotent consumers, but as we can, we have to avoid processing the same
@@ -528,8 +529,8 @@ class OutboxScheduler(
 
 **Domain event** is something interesting from a business point of view, that happened within the system, something that
 already occurred. We're capturing the fact something happened with the system. After events have been published from the
-outbox table to the broker, in this application, it consumes them from the Kafka, and the consumers themselves call *
-*EventHandlerService** methods, which builds a read model for out domain aggregates.
+outbox table to the broker, in this application, it consumes them from the Kafka, and the consumers themselves call 
+**EventHandlerService** methods, which builds a read model for out domain aggregates.
 
 The **read model** of a **CQRS**-based system provides materialized views of the data, typically as highly denormalized
 views. These views are tailored to the interfaces and display requirements of the application, which helps to maximize
@@ -640,9 +641,9 @@ class AccountEventHandlerServiceImpl(
 }
 ```
 
-The **infrastructure** layer read model repository **uses **MongoDB** [**Kotlin coroutines driver**](https://www.mongodb.com/docs/drivers/kotlin/coroutine/current/quick-reference/):
+The **infrastructure** layer read model repository uses **MongoDB** [**Kotlin coroutines driver**](https://www.mongodb.com/docs/drivers/kotlin/coroutine/current/quick-reference/):
 
-<img src="https://i.postimg.cc/pVC8pCwk/mongo-schema.png" alt="mongo_schema"/>
+<img src="https://i.postimg.cc/pVC8pCwk/mongo-schema.png" alt="mongo_schema"  width="30%" height="auto"/>
 
 ```kotlin
 interface AccountProjectionRepository {
