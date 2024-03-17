@@ -26,14 +26,14 @@ class MongoInitializer(private val mongoClient: MongoClient) {
             log.info { "accounts collection: $collection" }
 
             val indexes = collection.listIndexes().map { it["name"] }.toSet()
-            log.info { "indexes: $indexes" }
+            log.info { "account collection indexes: $indexes" }
 
             if (!indexes.contains(EMAIL_INDEX)) {
                 val emailIndex = collection.createIndex(
                     keys = Indexes.ascending(EMAIL),
                     options = IndexOptions(),
                 )
-                log.info { "created indexes: $emailIndex" }
+                log.info { "mongo account email index: $emailIndex" }
             }
 
             if (!indexes.contains(ACCOUNT_ID_INDEX)) {
@@ -41,11 +41,11 @@ class MongoInitializer(private val mongoClient: MongoClient) {
                     keys = Indexes.ascending(ACCOUNT_ID),
                     options = IndexOptions(),
                 )
-                log.info { "created indexes: $accountIdIndex" }
+                log.info { "account id index: $accountIdIndex" }
             }
 
             val createdIndexes = collection.listIndexes().toSet()
-            log.info { "createdIndexes: $createdIndexes" }
+            log.info { "mongodb created indexes: $createdIndexes" }
         }
             .onSuccess { log.info { "mongo successfully initialized" } }
             .onFailure { log.error { "error while creating mongo client: ${it.message}" } }

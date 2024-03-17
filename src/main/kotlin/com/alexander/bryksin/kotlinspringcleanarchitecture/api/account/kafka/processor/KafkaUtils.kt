@@ -1,10 +1,7 @@
 package com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.processor
 
 import com.alexander.bryksin.kotlinspringcleanarchitecture.api.account.kafka.processor.EventProcessor.Companion.KAFKA_HEADERS_ERROR_MESSAGE
-import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.header.Headers
 
 
 fun ConsumerRecord<String, ByteArray>.info(withValue: Boolean = true): String {
@@ -24,10 +21,6 @@ fun ConsumerRecord<String, ByteArray>.retryCount(): Int = runCatching {
 }.getOrDefault(0)
 
 
-fun ConsumerRecord<String, ByteArray>.headersWithRetryCount(count: Int = 1): Headers = headers()
-    .remove(EventProcessor.KAFKA_HEADERS_RETRY)
-    .add(EventProcessor.KAFKA_HEADERS_RETRY, count.toString().toByteArray(Charsets.UTF_8))
-
 fun ConsumerRecord<String, ByteArray>.headersToMap(): MutableMap<String, ByteArray> {
     val headersMap = mutableMapOf<String, ByteArray>()
     headers().forEach { headersMap[it.key()] = it.value() }
@@ -44,12 +37,6 @@ fun ConsumerRecord<String, ByteArray>.mergeHeaders(headers: Map<String, ByteArra
 fun buildRetryCountHeader(count: Int): MutableMap<String, ByteArray> {
     return mutableMapOf(EventProcessor.KAFKA_HEADERS_RETRY to count.toString().toByteArray(Charsets.UTF_8))
 }
-
-fun <T> Serializer.deserializeRecordToEvent(consumerRecord: ConsumerRecord<String, ByteArray>, clazz: Class<T>): T {
-    val outboxEvent = deserialize(consumerRecord.value(), OutboxEvent::class.java)
-    return deserialize(outboxEvent.data, clazz)
-}
-
 
 fun ConsumerRecord<String, ByteArray>.getKafkaRetryHeaders(
     baseRetryCount: Int = 0,

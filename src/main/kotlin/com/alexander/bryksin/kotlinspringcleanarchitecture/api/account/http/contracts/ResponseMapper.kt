@@ -114,8 +114,5 @@ internal fun mapErrorToResponse(err: AppError): ResponseEntity<*> {
     }
 }
 
-internal fun <T : Any> createdResponse(data: T) =
-    ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse(status = HttpStatus.CREATED, data = data))
-
 internal fun <T : Any> okResponse(data: T) =
     ResponseEntity.status(HttpStatus.OK).body(BaseResponse(status = HttpStatus.OK, data = data))
