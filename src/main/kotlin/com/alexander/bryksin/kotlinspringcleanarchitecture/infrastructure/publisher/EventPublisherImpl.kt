@@ -6,8 +6,8 @@ import com.alexander.bryksin.kotlinspringcleanarchitecture.application.account.e
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.publisher.EventPublisher
 import com.alexander.bryksin.kotlinspringcleanarchitecture.application.common.serializer.Serializer
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.account.errors.AppError
-import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.common.scope.eitherScope
+import com.alexander.bryksin.kotlinspringcleanarchitecture.domain.outbox.models.OutboxEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.future.await
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -28,6 +28,7 @@ class EventPublisherImpl(
     ): Either<AppError, Unit> = eitherScope<AppError, Unit> {
         val msg = ProducerRecord(event.kafkaTopic(kafkaTopics), event.aggregateId, event.data)
         headers.forEach { (key, value) -> msg.headers().add(key, value) }
+
         kafkaTemplate.send(msg).await()
     }
         .onRight { log.info { "published outbox event: $it" } }
@@ -45,6 +46,7 @@ class EventPublisherImpl(
     ): Either<AppError, Unit> = eitherScope<AppError, Unit> {
         val msg = ProducerRecord<String, ByteArray>(topic, serializer.serializeToBytes(data))
         headers.forEach { (key, value) -> msg.headers().add(key, value) }
+
         kafkaTemplate.send(msg).await()
     }
         .onRight { log.info { "published outbox event: topic: $topic" } }
@@ -59,6 +61,7 @@ class EventPublisherImpl(
     ): Either<AppError, Unit> = eitherScope<AppError, Unit> {
         val msg = ProducerRecord(topic, key, serializer.serializeToBytes(data))
         headers.forEach { (key, value) -> msg.headers().add(key, value) }
+
         kafkaTemplate.send(msg).await()
     }
         .onRight { log.info { "published outbox event: topic: $topic, key: $key" } }
@@ -72,6 +75,7 @@ class EventPublisherImpl(
     ): Either<AppError, Unit> = eitherScope<AppError, Unit> {
         val msg = ProducerRecord(topic, key, data)
         headers.forEach { (key, value) -> msg.headers().add(key, value) }
+
         kafkaTemplate.send(msg).await()
     }
         .onRight { log.info { "published outbox event: topic: $topic, key: $key" } }

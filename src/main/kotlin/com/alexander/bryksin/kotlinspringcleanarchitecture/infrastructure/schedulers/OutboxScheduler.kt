@@ -30,7 +30,7 @@ class OutboxScheduler(
             outboxRepository.deleteEventsWithLock(batchSize) { publisher.publish(it) }.bind()
         }.fold(
             ifLeft = { log.error { "error while publishing scheduler outbox events: $it" } },
-            ifRight = { log.info { "outbox scheduler published events" } }
+            ifRight = { log.debug { "outbox scheduler published events" } }
         )
     }
 

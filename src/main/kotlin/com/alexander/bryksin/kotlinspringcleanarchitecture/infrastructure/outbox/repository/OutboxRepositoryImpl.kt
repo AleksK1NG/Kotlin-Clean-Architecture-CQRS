@@ -65,10 +65,10 @@ class OutboxRepositoryImpl(
                 .map { row, _ -> row.toOutboxEvent() }
                 .all()
                 .asFlow()
-                .onStart { log.info { "start publishing outbox events batch: $batchSize" } }
+                .onStart { log.debug { "start publishing outbox events batch: $batchSize" } }
                 .onEach { callback(it).bind() }
                 .onEach { event -> deleteOutboxEvent(event).bind() }
-                .onCompletion { log.info { "completed publishing outbox events batch: $batchSize" } }
+                .onCompletion { log.debug { "completed publishing outbox events batch: $batchSize" } }
                 .collect()
         }
     }

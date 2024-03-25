@@ -2,9 +2,9 @@
     <img src="https://svgshare.com/i/13rC.svg" width="45%" height="auto" alt="Arch"/>
 </p>
 
-In this project implemented the microservice using **Clean Architecture and CQRS**.
-A tech stack used **Kotlin**, **Spring WebFlux** with **coroutines**,**Postgres** and **MongoDB**,
-**Kafka** as a message broker and [**Arrow-kt**](https://arrow-kt.io/) functional library
+In this project, the microservice uses **Clean Architecture and CQRS**.
+A tech stack used **Kotlin**, **Spring WebFlux** with **coroutines**,**PostgreSQL**, **MongoDB**,
+**Kafka**, and [**Arrow-kt**](https://arrow-kt.io/) functional library
 which like the documentation says brings idiomatic functional programming to Kotlin.
 
 **Clean Architecture** is one of the more popular software design approaches, it follows the principles of Dependency
@@ -51,20 +51,18 @@ The **Presentation layer** (named **api** here) is most outside layer and the en
 important part of the Presentation layer is the Controllers, which define the API endpoints in our system presented to
 the outside world and responsible for:
 
-* Handling interaction with outside world
-* Presenting, displaying or returning responses with the data
-* Translating the outside requests data (map requests to application layer comm ands)
-* Works with framework specific configuration setup
+* Handling interaction with the outside world
+* Presenting, displaying, or returning responses with the data
+* Translating the outside requests data (map requests to application layer commands)
+* Works with framework-specific configuration setup
 * Works on top of the application layer
 
 <img src="https://i.postimg.cc/JhsKQvL1/api-main.png" alt="api_layer" width="40%" height="auto" />
 
-[**Swagger UI**](http://localhost:8080/webjars/swagger-ui/index.html#)
-
 Let's look at the full way of command requests in the microservice. First things first, it accepts REST HTTP requests,
 validates input, if it's secured checks credentials, etc., then maps the request to the DTO the command and calls
 **AccountCommandService** **handle** method.
-For example, let's look at creating new account and deposit balance commands methods calls flow:
+For example, let's look at creating new account and deposit balance commands methods call flow:
 
 <img src="https://i.postimg.cc/hvWCvrNK/swagger-openapi-main.png" alt="swagger"/>
 
@@ -140,7 +138,7 @@ The **Application layer** contains the use cases of the application. A use case 
 action that the system can perform. Each use case is implemented as a command or a query. It is part of the whole
 application core like a Domain layer and is responsible for:
 
-* Executing the application use cases (all the actions and commands allowed to do with the system)
+* Executing the application use cases (all the actions and commands allowed to be done with the system)
 * Fetch domain objects
 * Manipulating domain objects
 
@@ -148,18 +146,18 @@ application core like a Domain layer and is responsible for:
 
 The **application** layer **AccountCommandService** has the business logic, which runs required business rules validations,
 then applies changes to the domain aggregate, persists domain objects in the database, produces the domain events, and
-persists them in the outbox table within one single transaction. The current application used some not-required small
+persists in the outbox table within one single transaction. The current application used some not-required small
 optimization for outbox publishing, after the command service commits the transaction, we publish the event, but we
-don't care if this publish fails, because of polling publisher realized as spring scheduler anyway will process it.
+don't care if this publishes fails, because of polling publisher realized as **Spring** scheduler anyway will process it.
 
-[**Arrow**](https://arrow-kt.io/) greatly improves developer experience because
-Kotlin doesn’t ship the [**Either**](https://apidocs.arrow-kt.io/arrow-core/arrow.core/-either/index.html) type
-with the standard SDK. Either is an entity whose value can be of two different types, called **left and right**.
-By convention, the **Right is for the success case and
-the Left for the error one**. It allows us to express the fact that a call might return a correct value or an error, and
-differentiate between the two of them. The Left/Right naming pattern is just a convention. Either is a great way to make
-the error handling in your code more explicit. Making the code more explicit reduces the amount of context that you need
-to keep in your head, which in turn makes the code easier to understand.
+[**Arrow**](https://arrow-kt.io/) greatly improves developer experience because Kotlin doesn’t ship the [**Either**](https://apidocs.arrow-kt.io/arrow-core/arrow.core/-either/index.html) type with the standard SDK.
+Either is an entity whose value can be of two different types, called **left and right**.
+By convention, the **Right is for the success case, and the Left for the error one**. 
+It allows us to express the fact that a call might return a correct value or an error, 
+and differentiate between the two of them. The Left/Right naming pattern is just a convention.
+Either is a great way to make the error handling in your code more explicit. 
+Making the code more explicit reduces the amount of context that you need to keep in your head,
+which in turn makes the code easier to understand.
 
 ```kotlin
 interface AccountCommandService {
@@ -219,8 +217,8 @@ class AccountCommandServiceImpl(
 ```
 
 **Domain layer** encapsulates the most important business rules of the system, it is the place where we have to start
-building core business rules, at the Domain-centric architecture, we start developing from the domain.The
-responsibilities of the domain layer:
+building core business rules, at the Domain-centric architecture, we start developing from the domain.
+The responsibilities of the domain layer:
 
 * Defining domain models
 * Defining rules, domain and business errors
@@ -237,10 +235,10 @@ richer behavior then richer domain model. It exposes only a specific set of publ
 data only in the way the domain approves, encapsulates logic, and does validations. Rich domain model
 properties are read-only by default.
 
-Domain models can be always valid or not, better prefer always valid domain models,
-at any point of time when we're working with domain state, we know it's valid and don't need to write additional
+Domain models can be always valid or not, better to prefer always valid domain models,
+at any point in time when we're working with domain state, we know it's valid and don't need to write additional
 validations to check it, always valid domain models means always in the valid state.
-And one more important details is **Persistence ignorance** -
+And one more important detail is **Persistence ignorance** -
 modeling the domain without taking into account how domain objects will be persisted.
 
 ```kotlin
@@ -355,7 +353,7 @@ used **PostgreSQL** with [**r2dbc**](https://spring.io/projects/spring-data-r2db
 ** with raw SQL queries, but if we want to use ORM entity, anyway we still pass domain objects through the other layers
 interfaces, and then inside the repository implementation code map to the ORM entities. For this project keep spring
 annotations as it is, but if we want cleaner implementation it's possible to move them to another layer.
-In this example project sql schema is simplified and not normalized.
+In this example, project sql schema is simplified and not normalized.
 
 ```kotlin
 interface AccountRepository {
@@ -412,10 +410,10 @@ parallel outbox table, of course, we have idempotent consumers, but as we can, w
 table events more than one time, to prevent multiple instances select and publish the same events,
 we use here **FOR UPDATE SKIP LOCKED** - this combination does the next thing,
 when one instance tries to select a batch of outbox events if
-some other instance already selected these records, first, one will skip locked records and select the next available
+some other instances already selected these records, first, one will skip locked records and select the next available
 and not locked, and so on.
-But again it's only my personal preferred way of implementation, use of only polling publisher is usually default one.
-as alternative possible to use debezium for example, but it's up to you.
+But again it's only my personal preferred way of implementation, the use of only polling publisher is usually default one.
+as an alternative possible to use debezium for example, but it's up to you.
 
 ```kotlin
 interface OutboxRepository {
@@ -818,7 +816,7 @@ class AccountQueryServiceImpl(
 }
 ```
 
-and it uses PostgreSQL or MongoDB repositories to get the data depending on the query use case:
+and uses PostgreSQL or MongoDB repositories to get the data depending on the query use case:
 
 ```kotlin
 @Component
